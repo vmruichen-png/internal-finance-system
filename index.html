@@ -951,7 +951,14 @@
             // 清空 input，允许重复导入同一个文件
             event.target.value = '';
         }
-
+        
+function updateMonthlyDashboard() {
+    renderProjectDropdowns();
+    renderLeaderboard();
+    renderOverview();
+    renderTables();
+}
+        
         // 页面初始化
         updateMonthlyDashboard();
         renderAnnualDashboard();
@@ -959,6 +966,7 @@
 
 </body>
 </html>
+
 
 
 
