@@ -813,7 +813,7 @@
             link.click();
         }
 
-        function importBackupData(event) {
+                function importBackupData(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -822,15 +822,35 @@
                 try {
                     const parsed = JSON.parse(e.target.result);
 
-                    // 核心要求：必须校验格式
                     if (!parsed.version || !parsed.data) {
                         alert("导入失败：文件格式不正确（未找到版本或数据主体）。");
                         return;
                     }
 
-                    // 核心要求：必须弹出危险确认提示
                     if (confirm("导入将覆盖当前所有数据，确定继续？")) {
-                        // 覆盖 localStorage 并存入
-                        localStorage.setItem('internal_fin_projects_v2', JSON.stringify(parsed.data.projects ||[]));
-                        localStorage.setItem('internal_fin_income_v2', JSON.stringify(parsed.data.income ||[]));
-                        localStorage.setItem('internal_fin_expense_v2', JSON.stringify(parsed.data.expense ||
+                        localStorage.setItem('internal_fin_projects_v2', JSON.stringify(parsed.data.projects || []));
+                        localStorage.setItem('internal_fin_income_v2', JSON.stringify(parsed.data.income || []));
+                        localStorage.setItem('internal_fin_expense_v2', JSON.stringify(parsed.data.expense || []));
+
+                        alert("数据恢复成功！页面将刷新。");
+                        location.reload();
+                    }
+
+                } catch (err) {
+                    alert("导入失败：文件解析错误。");
+                }
+            };
+
+            reader.readAsText(file);
+
+            // 清空 input，允许重复导入同一个文件
+            event.target.value = '';
+        }
+
+        // 页面初始化
+        updateMonthlyDashboard();
+        renderAnnualDashboard();
+    </script>
+
+</body>
+</html>
