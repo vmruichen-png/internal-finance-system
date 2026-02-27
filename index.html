@@ -540,17 +540,49 @@
             expSelect.innerHTML = `<optgroup label="🏢 公司公摊"><option value="ADMIN">🏢 公司公共管理费 (公摊)</option></optgroup><optgroup label="📁 计入项目成本">${projOptions}</optgroup>`;
         }
 
-        function updateMonthlyDashboard() {
-            renderProjectDropdowns();
-            renderLeaderboard(); 
-            renderOverview();    
-            renderTables();      
+        // ================= 新增：项目币种折算逻辑 =================
+        function toggleProjectCurrencyRate() {
+            const currency = document.getElementById('prj-currency').value;
+            const rateWrap = document.getElementById('wrap-prj-rate');
+            const rateInput = document.getElementById('prj-rate');
+            
+            if (currency === 'CNY') {
+                rateWrap.style.display = 'none'; 
+                rateInput.value = '1.0000'; // CNY强制汇率为1
+            } else {
+                rateWrap.style.display = 'flex'; 
+                if(rateInput.value === '1.0000') rateInput.value = ''; // 提示输入
+            }
+            calculateProjectPreview();
         }
 
+        function calculateProjectPreview() {
+            const amount = parseFloat(document.getElementById('prj-amount').value) || 0;
+            const rate = parseFloat(document.getElementById('prj-rate').value) || 0;
+            document.getElementById('prj-preview').innerText = `¥ ${formatMoney(amount * rate)}`;
+        }
+
+        // 绑定项目表单事件
+        document.getElementById('prj-currency').addEventListener('change', toggleProjectCurrencyRate);
+        document.getElementById('prj-amount').addEventListener('input', calculateProjectPreview);
+        document.getElementById('prj-rate').addEventListener('input', calculateProjectPreview);
+
+        // 初始化执行一次，确保界面默认状态正确
+        toggleProjectCurrencyRate();
+
+        // ================= 新增：删除项目逻辑 =================
+        function deleteProject(id) {
+            if (confirm('⚠️ 危险操作：确定要删除该项目吗？\n删除后，它将从下拉列表和排行中消失。\n（已关联该项目的收入/支出明细不会被删除，但归属将显示为"未知"）。\n\n请确认是否继续？')) {
+                dataStore.projects = dataStore.projects.filter(item => item.id !== id);
+                saveData(); // 自动刷新列表并重算统计数据
+            }
+        }
+
+        // ================= 覆盖：重新渲染项目排行榜(含删除按钮和新字段) =================
         function renderLeaderboard() {
             const tbody = document.getElementById('table-leaderboard');
             tbody.innerHTML = '';
-            if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">暂无数据</td></tr>`;
+            if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无项目数据</td></tr>`;
 
             const projectStats = dataStore.projects.map(p => {
                 let pReceived = 0, pReceivable = 0, pCost = 0;
@@ -568,12 +600,34 @@
 
             projectStats.forEach(stat => {
                 const gpColor = stat.actualGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+                const cnyContractValue = (stat.contractAmount || 0) * (stat.exchangeRate || 1);
+                
+                // 标签样式判断
+                let statusColor = 'tag-status-on'; // 默认进行中
+                if(stat.orderStatus === '已完成') statusColor = 'tag-admin'; // 紫色
+                if(stat.orderStatus === '已取消') statusColor = 'tag-status-done'; // 灰色
+                const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${stat.orderType}</span>` : '';
+
                 tbody.innerHTML += `<tr>
-                    <td style="font-weight:600;">${stat.name}</td><td style="color:var(--text-muted);">${stat.client}</td>
-                    <td>¥ ${formatMoney(parseFloat(stat.contractAmount)||0)}</td>
+                    <td>
+                        <div style="font-weight:600;">${stat.name}</div>
+                        <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">
+                            ${typeTag}
+                            <span class="tag ${statusColor}">${stat.orderStatus || '进行中'}</span>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted);">${stat.client}</td>
+                    <td>
+                        <div style="color:var(--text-main); font-weight:600;">¥ ${formatMoney(cnyContractValue)}</div>
+                        ${stat.currency && stat.currency !== 'CNY' ? `<div style="font-size:0.75rem; color:var(--text-muted);">原币: ${stat.contractAmount} ${stat.currency}</div>` : ''}
+                    </td>
                     <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pReceived)}</td>
-                    <td style="color:#f59e0b;">¥ ${formatMoney(stat.pReceivable)}</td><td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
+                    <td style="color:#f59e0b;">¥ ${formatMoney(stat.pReceivable)}</td>
+                    <td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
                     <td style="font-weight:700; color:${gpColor};">¥ ${formatMoney(stat.actualGrossProfit)}</td>
+                    <td>
+                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0; font-size:0.8rem; border:none; cursor:pointer;" onclick="deleteProject('${stat.id}')">❌ 删除</button>
+                    </td>
                 </tr>`;
             });
         }
@@ -898,4 +952,5 @@
 
 </body>
 </html>
+
 
