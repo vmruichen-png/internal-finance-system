@@ -453,12 +453,13 @@
     </div>
     <!-- ================= 新增结束 ================= -->
 
-    <script>
-        // ================= 1. 数据结构初始化 =================
+   <script>
+        // ================= 1. 数据结构初始化 (改为云端互通版) =================
+        // 初始化为空数组，等待从服务器加载
         let dataStore = {
-            projects: JSON.parse(localStorage.getItem('internal_fin_projects_v2')) ||[],
-            income: JSON.parse(localStorage.getItem('internal_fin_income_v2')) ||[],
-            expense: JSON.parse(localStorage.getItem('internal_fin_expense_v2')) ||[]
+            projects: [],
+            income: [],
+            expense: []
         };
 
         const todayDate = new Date();
@@ -473,17 +474,61 @@
         document.getElementById('inc-date').value = todayStr;
         document.getElementById('exp-date').value = todayStr;
 
-        // 全局事件监听
-        document.getElementById('global-month').addEventListener('change', updateMonthlyDashboard);
-        document.getElementById('annual-year').addEventListener('change', renderAnnualDashboard);
-
-        function saveData() {
-            localStorage.setItem('internal_fin_projects_v2', JSON.stringify(dataStore.projects));
-            localStorage.setItem('internal_fin_income_v2', JSON.stringify(dataStore.income));
-            localStorage.setItem('internal_fin_expense_v2', JSON.stringify(dataStore.expense));
-            updateMonthlyDashboard();
-            renderAnnualDashboard();
+        // ================= 新增：从服务器加载数据 =================
+        async function loadDataFromServer() {
+            try {
+                const response = await fetch('api.php');
+                if (response.ok) {
+                    const serverData = await response.json();
+                    // 将服务器数据赋值给本地变量，兼容空数据的情况
+                    dataStore.projects = serverData.projects || [];
+                    dataStore.income = serverData.income || [];
+                    dataStore.expense = serverData.expense || [];
+                    
+                    // 数据加载完毕后，刷新页面显示
+                    updateMonthlyDashboard();
+                    renderAnnualDashboard();
+                    if(typeof renderProjectDropdowns === 'function') renderProjectDropdowns();
+                }
+            } catch (error) {
+                console.error("加载数据失败:", error);
+                alert("无法连接到服务器加载数据，请检查网络！");
+            }
         }
+
+        // ================= 修改：将数据保存到服务器 =================
+        async function saveData() {
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataStore) // 将完整数据打包发给 PHP
+                });
+                
+                if (response.ok) {
+                    // 保存成功后刷新图表
+                    updateMonthlyDashboard();
+                    renderAnnualDashboard();
+                    if(typeof renderProjectDropdowns === 'function') renderProjectDropdowns();
+                } else {
+                    alert("数据保存失败！服务器发生错误。");
+                }
+            } catch (error) {
+                console.error("保存数据失败:", error);
+                alert("保存失败，请检查您的网络连接！");
+            }
+        }
+
+        // 在页面刚打开时，自动向服务器请求一次数据
+        window.onload = () => {
+            loadDataFromServer();
+        };
+
+        // 全局事件监听 (保留你原有的代码)
+        document.getElementById('global-month').addEventListener('change', updateMonthlyDashboard);
+        // ... (下方继续保留你原本的 formatMoney, getProjectById 等所有代码) ...
 
         function formatMoney(amount) { return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function getProjectById(id) { return dataStore.projects.find(p => p.id === id) || { name: '未知', client: '未知' }; }
@@ -966,6 +1011,7 @@ function updateMonthlyDashboard() {
 
 </body>
 </html>
+
 
 
 
