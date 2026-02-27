@@ -191,33 +191,77 @@
                 </div>
             </div>
 
-            <!-- 项目立项与核算 -->
+           <!-- ================= 优化后的：项目立项与核算 ================= -->
             <div class="projects-layout">
+                <!-- 左侧：立项表单 -->
                 <div class="card">
-                    <h2 class="section-title">📁 新建立项合同</h2>
-                    <form class="inline-form grid-1" id="form-project" style="border:none; padding:0;">
-                        <div class="form-group"><label>项目名称</label><input type="text" id="prj-name" class="form-control" required></div>
-                        <div class="form-group"><label>客户名称</label><input type="text" id="prj-client" class="form-control" required></div>
-                        <div class="form-group"><label>合同总额 (估算CNY)</label><input type="number" id="prj-contract" class="form-control" step="0.01" min="0" required></div>
+                    <h2 class="section-title">📁 新建订单/合同</h2>
+                    <!-- 使用 grid-4 使表单排版更紧凑整齐 -->
+                    <form class="inline-form grid-4" id="form-project" style="border:none; padding:0;">
+                        <div class="form-group" style="grid-column: span 2;"><label>项目/订单名称</label><input type="text" id="prj-name" class="form-control" required></div>
+                        <div class="form-group" style="grid-column: span 2;"><label>客户名称</label><input type="text" id="prj-client" class="form-control" required></div>
+                        
                         <div class="form-group"><label>立项日期</label><input type="date" id="prj-date" class="form-control" required></div>
-                        <button type="submit" class="btn-submit btn-primary">立项保存</button>
+                        <div class="form-group"><label>订单类型</label>
+                            <select id="prj-order-type" class="form-control" required>
+                                <option value="样品单">样品单</option>
+                                <option value="大货单" selected>大货单</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>订单状态</label>
+                            <select id="prj-order-status" class="form-control" required>
+                                <option value="进行中" selected>进行中</option>
+                                <option value="已完成">已完成</option>
+                                <option value="已取消">已取消</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>币种</label>
+                            <select id="prj-currency" class="form-control" required>
+                                <option value="CNY" selected>CNY - 人民币</option>
+                                <option value="USD">USD - 美元</option>
+                                <option value="EUR">EUR - 欧元</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;"><label>合同金额 (原币)</label><input type="number" id="prj-amount" class="form-control" step="0.01" min="0" required></div>
+                        <!-- 动态隐藏的银行汇率 -->
+                        <div class="form-group" id="wrap-prj-rate" style="grid-column: span 2; display: none;">
+                            <label style="color:#f43f5e;">银行汇率 (非CNY必填)</label>
+                            <input type="number" id="prj-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" required>
+                        </div>
+
+                        <div class="form-group calc-preview full-span">👉 折算人民币金额：<span id="prj-preview" class="text-profit">¥ 0.00</span></div>
+                        <button type="submit" class="btn-submit btn-primary full-span">立项保存</button>
                     </form>
                 </div>
+                
+                <!-- 右侧：项目核算表 -->
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h2 class="section-title" style="border:none; margin:0;">🏆 项目核算表 (全生命周期)</h2>
-                        <span style="font-size:0.75rem; color:var(--text-muted); background:#f3f4f6; padding:4px 8px; border-radius:4px;">* 统计自立项以来的所有流水</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted); background:#f3f4f6; padding:4px 8px; border-radius:4px;">* 支持删除，删除不影响历史明细</span>
                     </div>
-                    <div class="table-wrapper" style="max-height: 230px; margin-top: 10px;">
+                    <div class="table-wrapper" style="max-height: 280px; margin-top: 10px;">
                         <table>
                             <thead>
-                                <tr><th>项目名称</th><th>客户</th><th>合同总额</th><th>已到账收入</th><th>未到账(应收)</th><th>项目总成本</th><th>实际毛利</th></tr>
+                                <tr>
+                                    <th width="16%">项目名称</th>
+                                    <th width="12%">客户</th>
+                                    <th width="14%">合同总额</th>
+                                    <th width="12%">已到账</th>
+                                    <th width="12%">未到账(应收)</th>
+                                    <th width="12%">项目成本</th>
+                                    <th width="12%">实际毛利</th>
+                                    <th width="10%">操作</th>
+                                </tr>
                             </thead>
                             <tbody id="table-leaderboard"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
+            <!-- ================= 项目立项与核算 结束 ================= -->
 
             <!-- 录入与明细区 -->
             <div class="management-grid">
@@ -854,3 +898,4 @@
 
 </body>
 </html>
+
