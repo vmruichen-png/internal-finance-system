@@ -801,18 +801,25 @@
         }
 
         // ================= 5. 数据录入提交 =================
+// ================= 覆盖：项目提交表单逻辑 (含新字段) =================
         document.getElementById('form-project').addEventListener('submit', function(e) {
             e.preventDefault();
             dataStore.projects.push({
                 id: 'PRJ_' + Date.now().toString(),
                 name: document.getElementById('prj-name').value,
                 client: document.getElementById('prj-client').value,
-                contractAmount: document.getElementById('prj-contract').value,
+                orderType: document.getElementById('prj-order-type').value,
+                orderStatus: document.getElementById('prj-order-status').value,
+                currency: document.getElementById('prj-currency').value,
+                contractAmount: parseFloat(document.getElementById('prj-amount').value),
+                exchangeRate: parseFloat(document.getElementById('prj-rate').value),
                 startDate: document.getElementById('prj-date').value
             });
             saveData();
             this.reset();
             document.getElementById('prj-date').value = todayStr;
+            document.getElementById('prj-currency').value = 'CNY'; // 恢复默认
+            toggleProjectCurrencyRate(); // 重置UI
         });
 
         document.getElementById('form-income').addEventListener('submit', function(e) {
@@ -952,5 +959,6 @@
 
 </body>
 </html>
+
 
 
