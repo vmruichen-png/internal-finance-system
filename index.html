@@ -480,8 +480,11 @@
                     dataStore.income = serverData.income || [];
                     dataStore.expense = serverData.expense ||[];
                     
-                    updateMonthlyDashboard();
-                    renderAnnualDashboard();
+                   renderProjectDropdowns();
+                   renderLeaderboard();
+                   renderTables();
+                   updateMonthlyDashboard();
+                   renderAnnualDashboard();
                     
                     syncStatusEl.innerText = "✅ 已与云端同步";
                     syncStatusEl.style.color = "#10b981";
@@ -857,5 +860,6 @@
                         dataStore.projects = parsed.data.projects ||[];
                         dataStore.income = parsed.data.income ||[];
                         dataStore.expense = parsed.data.expense ||
+
 
 
