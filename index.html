@@ -789,6 +789,9 @@
             const expData = dataStore.expense.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
             if(expData.length === 0) expTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
             expData.forEach(item => {
+                const expStatus = item.status || '已支付'; // 兼容历史数据
+                const statusTag = expStatus === '已支付' ? 'tag-status-on' : 'tag-status-off';
+                
                 const typeHtml = item.projectId === 'ADMIN' ? 
                     `<span class="tag tag-admin">管理费用</span>` : 
                     `<span class="tag tag-project" style="margin-bottom:4px;">项目成本</span><br><span style="font-size:0.75rem;">${getProjectById(item.projectId).name}</span>`;
@@ -796,12 +799,12 @@
                     <td>${item.date}</td>
                     <td>${typeHtml}</td>
                     <td>${item.category}</td>
+                    <td><span class="tag ${statusTag}">${expStatus}</span></td>
                     <td>${getAmountHtml(item, false)}</td>
                     <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
                     <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button></td>
                 </tr>`;
             });
-        }
 
         function renderAnnualDashboard() {
             const year = document.getElementById('annual-year').value;
@@ -1019,6 +1022,7 @@
     </script>
 </body>
 </html>
+
 
 
 
