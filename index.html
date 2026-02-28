@@ -1124,13 +1124,35 @@ function toggleSupplier(trClass, iconElement) {
             if(mgrArr.length === 0) tMgr.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无数据</td></tr>';
             mgrArr.forEach((m, idx) => {
                 let rankHtml = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<span class="rank-num">${idx + 1}</span>`;
+                
+                // 【新增】：创建每行的专属 ID
+                const trId = `client-mgr-${idx}`; 
+
+                // 【修改】：在排名后面加入可点击的 ▶ 按钮，主行背景设为白色
                 tMgr.innerHTML += `
-                    <tr>
-                        <td style="text-align:center;">${rankHtml}</td>
+                    <tr style="background: #fff; font-weight: 600;">
+                        <td style="text-align:center;">
+                            ${rankHtml} 
+                            <span class="toggle-icon" onclick="toggleSupplier('${trId}', this)" style="margin-left: 5px; font-size: 0.8rem;">▶</span>
+                        </td>
                         <td style="font-weight:600;">👤 ${m.name}</td>
                         <td style="color: var(--income-color); font-weight:700;">${formatMoney(m.totalAmount)}</td>
                     </tr>
                 `;
+                
+                // 【新增】：将该经理名下的所有项目按金额降序排列，并作为隐藏的子行渲染
+                m.projects.sort((a,b) => b.amount - a.amount).forEach(p => {
+                    tMgr.innerHTML += `
+                        <tr class="sub-row ${trId}">
+                            <td></td>
+                            <td style="color: var(--text-muted); padding-left: 20px;">
+                                ↳ 📁 ${p.name} 
+                                <span style="font-size: 0.75rem; color: #8b5cf6; margin-left: 5px;">(${p.client || '未知客户'})</span>
+                            </td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">${formatMoney(p.amount)}</td>
+                        </tr>
+                    `;
+                });
             });
         }
         
@@ -1308,6 +1330,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
