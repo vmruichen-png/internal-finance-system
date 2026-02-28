@@ -182,27 +182,32 @@
                 </div>
             </div>
 
-            <div class="overview-grid grid-5">
+            <!-- 【替换位置 1】替换原有的 overview-grid grid-5 区域 -->
+            <div class="overview-grid grid-6">
                 <div class="card stat-card c-income">
                     <div class="stat-title">本月实际到账 (已到账)</div>
                     <div class="stat-value text-profit" id="stat-income-received">¥ 0.00</div>
                     <div class="stat-sub" id="stat-income-total">包含应收总计: ¥ 0.00</div>
                 </div>
                 <div class="card stat-card c-project">
-                    <div class="stat-title">本月项目总成本</div>
+                    <div class="stat-title">本月已付项目成本</div>
                     <div class="stat-value" style="color: var(--project-color);" id="stat-proj-cost">¥ 0.00</div>
                 </div>
                 <div class="card stat-card c-admin">
-                    <div class="stat-title">本月管理费用</div>
+                    <div class="stat-title">本月已付管理费</div>
                     <div class="stat-value" style="color: var(--admin-color);" id="stat-admin-exp">¥ 0.00</div>
                 </div>
                 <div class="card stat-card c-alert">
-                    <div class="stat-title">管理费用率 (警戒线<15%)</div>
-                    <div class="stat-value" id="stat-admin-rate">0.00%</div>
-                    <div class="stat-sub">管理费用 ÷ 包含应收总收入</div>
+                    <div class="stat-title">本月应付总额 (未付)</div>
+                    <div class="stat-value" style="color: #f59e0b;" id="stat-payable-total">¥ 0.00</div>
+                </div>
+                <div class="card stat-card c-income">
+                    <div class="stat-title">本月真实现金流</div>
+                    <div class="stat-value" id="stat-cash-flow">¥ 0.00</div>
+                    <div class="stat-sub">实际到账 - 已支付支出</div>
                 </div>
                 <div class="card stat-card c-profit">
-                    <div class="stat-title">本月账面净利润 (含应收)</div>
+                    <div class="stat-title">本月账面净利润 (含应付)</div>
                     <div class="stat-value" id="stat-net-profit">¥ 0.00</div>
                     <div class="stat-sub">净利率: <span id="stat-net-margin">0.00%</span></div>
                 </div>
@@ -983,3 +988,4 @@
     </script>
 </body>
 </html>
+
