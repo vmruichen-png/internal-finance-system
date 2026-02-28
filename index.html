@@ -894,6 +894,63 @@
                     <td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td>
                 </tr>`;
             });
+            // 供应商数据统计逻辑
+            const supplierMap = {};
+            yearExpense.forEach(e => {
+                const supp = e.supplier || '未登记供应商';
+                if (!supplierMap[supp]) {
+                    supplierMap[supp] = { name: supp, total: 0, paid: 0, payable: 0, projects: {} };
+                }
+                const val = e.amount * e.rate;
+                const isPaid = (e.status || '已支付') === '已支付';
+                
+                supplierMap[supp].total += val;
+                if (isPaid) { supplierMap[supp].paid += val; } 
+                else { supplierMap[supp].payable += val; }
+                
+                // 记录项目维度的明细
+                const pName = e.projectId === 'ADMIN' ? '公司公摊管理费' : (getProjectById(e.projectId).name || '未知项目');
+                if (!supplierMap[supp].projects[pName]) {
+                    supplierMap[supp].projects[pName] = { paid: 0, payable: 0 };
+                }
+                if (isPaid) { supplierMap[supp].projects[pName].paid += val; } 
+                else { supplierMap[supp].projects[pName].payable += val; }
+            });
+
+            const supplierArr = Object.values(supplierMap).sort((a, b) => b.payable - a.payable);
+            const suppTbody = document.getElementById('table-annual-suppliers');
+            suppTbody.innerHTML = '';
+            
+            if (supplierArr.length === 0) {
+                suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据</td></tr>`;
+            } else {
+                supplierArr.forEach((s, idx) => {
+                    const payableRatio = s.total > 0 ? (s.payable / s.total) * 100 : 0;
+                    const trId = `supp-${idx}`;
+                    
+                    suppTbody.innerHTML += `<tr style="font-weight: 600;">
+                        <td style="text-align: center;"><span class="toggle-icon" onclick="toggleSupplier('${trId}', this)">▶</span></td>
+                        <td>${s.name}</td>
+                        <td style="color: var(--text-main);">¥ ${formatMoney(s.total)}</td>
+                        <td style="color: var(--income-color);">¥ ${formatMoney(s.paid)}</td>
+                        <td style="color: var(--expense-color);">¥ ${formatMoney(s.payable)}</td>
+                        <td>${payableRatio.toFixed(2)}%</td>
+                    </tr>`;
+                    
+                    let subRowsHtml = '';
+                    for (const[pName, pData] of Object.entries(s.projects)) {
+                        subRowsHtml += `<tr class="sub-row ${trId}">
+                            <td></td>
+                            <td style="color: var(--text-muted); padding-left: 10px;">↳ ${pName}</td>
+                            <td style="color: var(--text-muted);">¥ ${formatMoney(pData.paid + pData.payable)}</td>
+                            <td style="color: var(--income-color); font-size: 0.75rem;">已付: ¥ ${formatMoney(pData.paid)}</td>
+                            <td style="color: #f59e0b; font-size: 0.75rem;">未付: ¥ ${formatMoney(pData.payable)}</td>
+                            <td></td>
+                        </tr>`;
+                    }
+                    suppTbody.innerHTML += subRowsHtml;
+                });
+            }
         }
 
         // ================= 表单提交与云端操作 =================
@@ -1069,6 +1126,7 @@
     </script>
 </body>
 </html>
+
 
 
 
