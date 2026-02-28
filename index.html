@@ -432,6 +432,50 @@
             </div>
         </div>
     </div>
+    <div id="page-client" class="page">
+        <div class="container">
+            
+            <div class="header">
+                <h1>👥 客户与项目经理经营分析</h1>
+            </div>
+            <div class="management-grid">
+                <!-- 公司利润排行 -->
+                <div class="card">
+                    <h2 class="section-title">🏢 客户公司贡献排行 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(按原币种统计，点击 ▶ 展开明细)</span></h2>
+                    <div class="table-wrapper" style="max-height: 500px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="8%">明细</th>
+                                    <th width="25%">客户公司名称</th>
+                                    <th width="20%">总收入(原币)</th>
+                                    <th width="20%">总支出(原币)</th>
+                                    <th width="27%">总利润(原币)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-client-company"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- 项目经理排行 -->
+                <div class="card">
+                    <h2 class="section-title">👤 项目经理签单排行 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(按原币种合同总计)</span></h2>
+                    <div class="table-wrapper" style="max-height: 500px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="15%" style="text-align:center;">排名</th>
+                                    <th width="40%">项目经理</th>
+                                    <th width="45%">负责项目总金额(原币)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-client-manager"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="page-settings" class="page">
         <div class="container">
@@ -1161,6 +1205,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
