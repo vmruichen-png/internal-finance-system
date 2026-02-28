@@ -974,7 +974,24 @@ function toggleSupplier(trClass, iconElement) {
         // ================= 表单提交与云端操作 =================
         document.getElementById('form-project').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const cName = document.getElementById('prj-client').value.trim();
+            const mName = document.getElementById('prj-manager').value.trim();
+            let cId = null, mId = null;
+            if (cName) {
+                let comp = dataStore.companies.find(c => c.name === cName);
+                if (!comp) { comp = { id: 'COMP_' + Date.now(), name: cName }; dataStore.companies.push(comp); }
+                cId = comp.id;
+            }
+            if (mName) {
+                let mgr = dataStore.managers.find(m => m.name === mName);
+                if (!mgr) { mgr = { id: 'MGR_' + Date.now(), name: mName }; dataStore.managers.push(mgr); }
+                mId = mgr.id;
+            }
+
             dataStore.projects.push({
+                companyId: cId,
+                managerId: mId,
                 id: 'PRJ_' + Date.now().toString(),
                 name: document.getElementById('prj-name').value, 
                 client: document.getElementById('prj-client').value,
@@ -1128,6 +1145,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
