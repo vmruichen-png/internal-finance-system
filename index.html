@@ -507,8 +507,17 @@
                 });
                 
                 if (response.ok) {
-                    updateMonthlyDashboard();
-                    renderAnnualDashboard();
+
+    // 🔥 新增：重新刷新所有界面
+    renderProjectDropdowns();
+    renderLeaderboard();
+    renderTables();
+    updateMonthlyDashboard();
+    renderAnnualDashboard();
+
+    syncStatusEl.innerText = "✅ 已保存至云端";
+    setTimeout(() => syncStatusEl.innerText = "✅ 已与云端同步", 2000);
+}
                     syncStatusEl.innerText = "✅ 已保存至云端";
                     setTimeout(() => syncStatusEl.innerText = "✅ 已与云端同步", 2000);
                 } else {
@@ -847,3 +856,4 @@
                         dataStore.projects = parsed.data.projects ||[];
                         dataStore.income = parsed.data.income ||[];
                         dataStore.expense = parsed.data.expense ||
+
