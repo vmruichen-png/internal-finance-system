@@ -1030,6 +1030,106 @@ function toggleSupplier(trClass, iconElement) {
             });
             iconElement.innerText = isExpanded ? '▼' : '▶';
         }
+        function renderClientDashboard() {
+            const compMap = {};
+            const mgrMap = {};
+            
+            // 遍历项目收集基本信息（直接智能兼容旧数据）
+            dataStore.projects.forEach(p => {
+                const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
+                const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
+                
+                if(!compMap[cId]) compMap[cId] = { name: p.client || '未分类公司', income: 0, expense: 0, profit: 0, managers: {} };
+                if(!compMap[cId].managers[mId]) compMap[cId].managers[mId] = { name: p.manager || '未分类经理', income: 0, expense: 0, projects: [] };
+                if(!mgrMap[mId]) mgrMap[mId] = { name: p.manager || '未分类经理', totalAmount: 0 };
+                
+                // 按原币种合同金额统计收入
+                const contractVal = p.contractAmount || 0;
+                compMap[cId].income += contractVal;
+                compMap[cId].managers[mId].income += contractVal;
+                mgrMap[mId].totalAmount += contractVal;
+                
+                compMap[cId].managers[mId].projects.push({ id: p.id, name: p.name, income: contractVal, expense: 0 });
+            });
+            
+            // 遍历支出统计项目成本
+            dataStore.expense.forEach(e => {
+                if(e.projectId === 'ADMIN') return;
+                const p = dataStore.projects.find(proj => proj.id === e.projectId);
+                if(p) {
+                    const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
+                    const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
+                    const expVal = e.amount || 0; // 原币种金额
+                    
+                    if(compMap[cId]) compMap[cId].expense += expVal;
+                    if(compMap[cId] && compMap[cId].managers[mId]) {
+                        compMap[cId].managers[mId].expense += expVal;
+                        const projRef = compMap[cId].managers[mId].projects.find(pr => pr.id === p.id);
+                        if(projRef) projRef.expense += expVal;
+                    }
+                }
+            });
+            
+            // 渲染公司利润排行 (倒序)
+            const compArr = Object.values(compMap).filter(c => c.income > 0 || c.expense > 0);
+            compArr.forEach(c => c.profit = c.income - c.expense);
+            compArr.sort((a, b) => b.profit - a.profit);
+            
+            const tComp = document.getElementById('table-client-company');
+            tComp.innerHTML = '';
+            if(compArr.length === 0) tComp.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            
+            compArr.forEach((c, idx) => {
+                const trId = `client-comp-${idx}`;
+                tComp.innerHTML += `
+                    <tr style="font-weight: 600; background: #fff;">
+                        <td style="text-align: center;"><span class="toggle-icon" onclick="toggleSupplier('${trId}', this)">▶</span></td>
+                        <td>${c.name}</td>
+                        <td style="color: var(--income-color);">${formatMoney(c.income)}</td>
+                        <td style="color: var(--expense-color);">${formatMoney(c.expense)}</td>
+                        <td style="color: ${c.profit < 0 ? 'var(--expense-color)' : 'var(--profit-color)'};">${formatMoney(c.profit)}</td>
+                    </tr>
+                `;
+                Object.values(c.managers).forEach(m => {
+                    tComp.innerHTML += `
+                        <tr class="sub-row ${trId}">
+                            <td></td>
+                            <td style="color: var(--admin-color); font-weight:600; padding-left: 10px;">↳ 👤 ${m.name}</td>
+                            <td style="color: var(--income-color); font-size: 0.8rem;">${formatMoney(m.income)}</td>
+                            <td style="color: var(--expense-color); font-size: 0.8rem;">${formatMoney(m.expense)}</td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">${formatMoney(m.income - m.expense)}</td>
+                        </tr>
+                    `;
+                    m.projects.forEach(p => {
+                        tComp.innerHTML += `
+                            <tr class="sub-row ${trId}">
+                                <td></td>
+                                <td style="color: var(--text-muted); padding-left: 20px;">↳ 📁 ${p.name}</td>
+                                <td style="color: var(--text-muted); font-size: 0.75rem;">${formatMoney(p.income)}</td>
+                                <td style="color: var(--text-muted); font-size: 0.75rem;">${formatMoney(p.expense)}</td>
+                                <td style="color: var(--text-muted); font-size: 0.75rem;">${formatMoney(p.income - p.expense)}</td>
+                            </tr>
+                        `;
+                    });
+                });
+            });
+            
+            // 渲染项目经理排行
+            const mgrArr = Object.values(mgrMap).filter(m => m.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount);
+            const tMgr = document.getElementById('table-client-manager');
+            tMgr.innerHTML = '';
+            if(mgrArr.length === 0) tMgr.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            mgrArr.forEach((m, idx) => {
+                let rankHtml = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<span class="rank-num">${idx + 1}</span>`;
+                tMgr.innerHTML += `
+                    <tr>
+                        <td style="text-align:center;">${rankHtml}</td>
+                        <td style="font-weight:600;">👤 ${m.name}</td>
+                        <td style="color: var(--income-color); font-weight:700;">${formatMoney(m.totalAmount)}</td>
+                    </tr>
+                `;
+            });
+        }
         
         // ================= 表单提交与云端操作 =================
         document.getElementById('form-project').addEventListener('submit', async function(e) {
@@ -1205,6 +1305,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
