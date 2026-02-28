@@ -668,9 +668,25 @@
             const pIndex = dataStore.projects.findIndex(item => item.id === id);
             
             if(pIndex > -1) {
+                const cName = document.getElementById('edit-prj-client').value.trim();
+                const mName = document.getElementById('edit-prj-manager').value.trim();
+                let cId = null, mId = null;
+                if (cName) {
+                    let comp = dataStore.companies.find(c => c.name === cName);
+                    if (!comp) { comp = { id: 'COMP_' + Date.now(), name: cName }; dataStore.companies.push(comp); }
+                    cId = comp.id;
+                }
+                if (mName) {
+                    let mgr = dataStore.managers.find(m => m.name === mName);
+                    if (!mgr) { mgr = { id: 'MGR_' + Date.now(), name: mName }; dataStore.managers.push(mgr); }
+                    mId = mgr.id;
+                }
+                dataStore.projects[pIndex].companyId = cId;
+                dataStore.projects[pIndex].managerId = mId;
+
                 dataStore.projects[pIndex].name = document.getElementById('edit-prj-name').value;
-                dataStore.projects[pIndex].client = document.getElementById('edit-prj-client').value;
-                dataStore.projects[pIndex].manager = document.getElementById('edit-prj-manager').value;
+                dataStore.projects[pIndex].client = cName;
+                dataStore.projects[pIndex].manager = mName;
                 dataStore.projects[pIndex].orderStatus = document.getElementById('edit-prj-status').value;
                 dataStore.projects[pIndex].contractAmount = parseFloat(document.getElementById('edit-prj-amount').value);
                 
@@ -1145,6 +1161,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
