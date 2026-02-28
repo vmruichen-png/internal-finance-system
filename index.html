@@ -1094,6 +1094,8 @@ function toggleSupplier(trClass, iconElement) {
                         dataStore.projects = parsed.data.projects || [];
                         dataStore.income = parsed.data.income || [];
                         dataStore.expense = parsed.data.expense || [];
+                        dataStore.companies = parsed.data.companies ||[];
+                        dataStore.managers = parsed.data.managers ||[];
                         // 保存到服务器
                         await saveData();
                         // 重新渲染所有界面
@@ -1124,6 +1126,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
