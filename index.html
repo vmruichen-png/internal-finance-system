@@ -805,7 +805,8 @@
                     <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button></td>
                 </tr>`;
             });
-
+      }
+        
         function renderAnnualDashboard() {
             const year = document.getElementById('annual-year').value;
             if(!year) return;
@@ -1024,6 +1025,7 @@
     </script>
 </body>
 </html>
+
 
 
 
