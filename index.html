@@ -1040,8 +1040,9 @@ function toggleSupplier(trClass, iconElement) {
                 const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
                 
                 if(!compMap[cId]) compMap[cId] = { name: p.client || '未分类公司', income: 0, expense: 0, profit: 0, managers: {} };
-                if(!compMap[cId].managers[mId]) compMap[cId].managers[mId] = { name: p.manager || '未分类经理', income: 0, expense: 0, projects: [] };
-                if(!mgrMap[mId]) mgrMap[mId] = { name: p.manager || '未分类经理', totalAmount: 0 };
+                if(!compMap[cId].managers[mId]) compMap[cId].managers[mId] = { name: p.manager || '未分类经理', income: 0, expense: 0, projects:[] };
+                // 【修改】：给 mgrMap 增加 projects 数组，用来装项目明细
+                if(!mgrMap[mId]) mgrMap[mId] = { name: p.manager || '未分类经理', totalAmount: 0, projects:[] };
                 
                 // 按原币种合同金额统计收入
                 const contractVal = p.contractAmount || 0;
@@ -1050,6 +1051,8 @@ function toggleSupplier(trClass, iconElement) {
                 mgrMap[mId].totalAmount += contractVal;
                 
                 compMap[cId].managers[mId].projects.push({ id: p.id, name: p.name, income: contractVal, expense: 0 });
+                // 【新增】：把具体项目存入该经理的下拉列表中
+                mgrMap[mId].projects.push({ name: p.name, amount: contractVal, client: p.client });
             });
             
             // 遍历支出统计项目成本
@@ -1305,6 +1308,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
