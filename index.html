@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>企业财务管理系统</title>
+    <title>企业云端财务管理系统</title>
     <style>
         /* ================= 基础与全局样式 ================= */
         :root {
@@ -124,6 +124,7 @@
         .tag { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
         .tag-status-on { background: #dcfce7; color: #166534; }
         .tag-status-off { background: #fef3c7; color: #b45309; }
+        .tag-status-done { background: #f3f4f6; color: #4b5563; }
         .tag-project { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
         .tag-admin { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
 
@@ -134,19 +135,38 @@
 
         .rank-medal { font-size: 1.2rem; text-align: center; display: block; }
         .rank-num { display: inline-block; width: 24px; height: 24px; line-height: 24px; background: #e5e7eb; color: #374151; border-radius: 50%; text-align: center; font-weight: bold; font-size: 0.8rem; }
+        
+        #sync-status { font-size: 0.8rem; color: #10b981; margin-left: auto; display: none; align-items: center; gap: 4px;}
+
+        /* 编辑模态框样式 */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);
+            align-items: center; justify-content: center;
+        }
+        .modal.show { display: flex; animation: fadeIn 0.2s; }
+        .modal-content {
+            background-color: var(--card-bg); margin: auto; padding: 24px;
+            border-radius: var(--radius); width: 90%; max-width: 400px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .close-btn { color: #aaa; position: absolute; right: 20px; top: 16px; font-size: 24px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: #333; }
     </style>
 </head>
 <body>
 
     <!-- ================= 全局顶部导航 ================= -->
     <nav class="top-nav">
-        <div class="logo">🏢 企业内部财务系统</div>
+        <div class="logo">
+            🏢 企业云端财务系统 
+            <span id="sync-status">✅ 已与云端同步</span>
+        </div>
         <div class="nav-menu">
             <button class="nav-btn active" onclick="switchPage('page-monthly', this)">📅 月度工作台</button>
             <button class="nav-btn" onclick="switchPage('page-annual', this)">📊 年度经营分析</button>
-            <!-- ======== 新增：系统设置导航菜单 ======== -->
             <button class="nav-btn" onclick="switchPage('page-settings', this)">⚙️ 系统设置</button>
-            <!-- ======== 新增结束 ======== -->
         </div>
     </nav>
 
@@ -191,15 +211,15 @@
                 </div>
             </div>
 
-           <!-- ================= 优化后的：项目立项与核算 ================= -->
+           <!-- 项目立项与核算 -->
             <div class="projects-layout">
                 <!-- 左侧：立项表单 -->
                 <div class="card">
                     <h2 class="section-title">📁 新建订单/合同</h2>
-                    <!-- 使用 grid-4 使表单排版更紧凑整齐 -->
                     <form class="inline-form grid-4" id="form-project" style="border:none; padding:0;">
                         <div class="form-group" style="grid-column: span 2;"><label>项目/订单名称</label><input type="text" id="prj-name" class="form-control" required></div>
-                        <div class="form-group" style="grid-column: span 2;"><label>客户名称</label><input type="text" id="prj-client" class="form-control" required></div>
+                        <div class="form-group" style="grid-column: span 1;"><label>客户名称</label><input type="text" id="prj-client" class="form-control" required></div>
+                        <div class="form-group" style="grid-column: span 1;"><label>项目经理</label><input type="text" id="prj-manager" class="form-control" required></div>
                         
                         <div class="form-group"><label>立项日期</label><input type="date" id="prj-date" class="form-control" required></div>
                         <div class="form-group"><label>订单类型</label>
@@ -213,7 +233,6 @@
                             <select id="prj-order-status" class="form-control" required>
                                 <option value="进行中" selected>进行中</option>
                                 <option value="已完成">已完成</option>
-                                <option value="已取消">已取消</option>
                             </select>
                         </div>
                         <div class="form-group"><label>币种</label>
@@ -225,7 +244,6 @@
                         </div>
 
                         <div class="form-group" style="grid-column: span 2;"><label>合同金额 (原币)</label><input type="number" id="prj-amount" class="form-control" step="0.01" min="0" required></div>
-                        <!-- 动态隐藏的银行汇率 -->
                         <div class="form-group" id="wrap-prj-rate" style="grid-column: span 2; display: none;">
                             <label style="color:#f43f5e;">银行汇率 (非CNY必填)</label>
                             <input type="number" id="prj-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" required>
@@ -246,14 +264,9 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th width="16%">项目名称</th>
-                                    <th width="12%">客户</th>
-                                    <th width="14%">合同总额</th>
-                                    <th width="12%">已到账</th>
-                                    <th width="12%">未到账(应收)</th>
-                                    <th width="12%">项目成本</th>
-                                    <th width="12%">实际毛利</th>
-                                    <th width="10%">操作</th>
+                                    <th width="16%">项目名称</th><th width="12%">客户</th><th width="14%">合同总额</th>
+                                    <th width="12%">已到账</th><th width="12%">未到账(应收)</th><th width="12%">项目成本</th>
+                                    <th width="12%">实际毛利</th><th width="10%">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="table-leaderboard"></tbody>
@@ -261,7 +274,6 @@
                     </div>
                 </div>
             </div>
-            <!-- ================= 项目立项与核算 结束 ================= -->
 
             <!-- 录入与明细区 -->
             <div class="management-grid">
@@ -279,10 +291,8 @@
                         </div>
                         <div class="form-group"><label>币种</label>
                             <select id="inc-currency" class="form-control" required>
-                                <option value="CNY" selected>CNY - 人民币</option>
-                                <option value="USD">USD - 美元</option>
-                                <option value="EUR">EUR - 欧元</option>
-                                <option value="HKD">HKD - 港币</option>
+                                <option value="CNY" selected>CNY - 人民币</option><option value="USD">USD - 美元</option>
+                                <option value="EUR">EUR - 欧元</option><option value="HKD">HKD - 港币</option>
                             </select>
                         </div>
                         <div class="form-group"><label>金额</label><input type="number" id="inc-amount" class="form-control" step="0.01" min="0" required></div>
@@ -360,67 +370,40 @@
                 <div class="controls-wrapper">
                     <div class="filter-wrapper">
                         <label for="annual-year">分析年份：</label>
-                        <!-- 默认生成年份，通过JS控制 -->
                         <input type="number" id="annual-year" class="filter-input" style="width: 100px;" min="2000" max="2100" step="1">
                     </div>
                 </div>
             </div>
 
-            <!-- 年度 6 大指标 -->
+            <!-- 年度指标 -->
             <div class="overview-grid grid-6">
-                <div class="card stat-card c-dark">
-                    <div class="stat-title">年度总收入 (含应收)</div>
-                    <div class="stat-value" id="ann-income-total">¥ 0.00</div>
-                </div>
-                <div class="card stat-card c-income">
-                    <div class="stat-title">年度实际到账收入</div>
-                    <div class="stat-value text-profit" id="ann-income-received">¥ 0.00</div>
-                </div>
-                <div class="card stat-card c-project">
-                    <div class="stat-title">年度项目总成本</div>
-                    <div class="stat-value" style="color: var(--project-color);" id="ann-proj-cost">¥ 0.00</div>
-                </div>
-                <div class="card stat-card c-admin">
-                    <div class="stat-title">年度管理费用</div>
-                    <div class="stat-value" style="color: var(--admin-color);" id="ann-admin-cost">¥ 0.00</div>
-                </div>
-                <div class="card stat-card c-profit">
-                    <div class="stat-title">年度净利润</div>
-                    <div class="stat-value" id="ann-net-profit">¥ 0.00</div>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-title">年度净利率</div>
-                    <div class="stat-value" id="ann-net-margin">0.00%</div>
-                </div>
+                <div class="card stat-card c-dark"><div class="stat-title">年度总收入 (含应收)</div><div class="stat-value" id="ann-income-total">¥ 0.00</div></div>
+                <div class="card stat-card c-income"><div class="stat-title">年度实际到账收入</div><div class="stat-value text-profit" id="ann-income-received">¥ 0.00</div></div>
+                <div class="card stat-card c-project"><div class="stat-title">年度项目总成本</div><div class="stat-value" style="color: var(--project-color);" id="ann-proj-cost">¥ 0.00</div></div>
+                <div class="card stat-card c-admin"><div class="stat-title">年度管理费用</div><div class="stat-value" style="color: var(--admin-color);" id="ann-admin-cost">¥ 0.00</div></div>
+                <div class="card stat-card c-profit"><div class="stat-title">年度净利润</div><div class="stat-value" id="ann-net-profit">¥ 0.00</div></div>
+                <div class="card stat-card"><div class="stat-title">年度净利率</div><div class="stat-value" id="ann-net-margin">0.00%</div></div>
             </div>
 
-            <!-- 项目排行榜 -->
+            <!-- 排行榜 -->
             <div class="card" style="margin-top: 10px;">
                 <h2 class="section-title">🏆 经营项目年度贡献排行榜 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(默认按年收入降序排序)</span></h2>
                 <div class="table-wrapper" style="max-height: 500px;">
                     <table>
                         <thead>
                             <tr>
-                                <th width="8%" style="text-align:center;">排名</th>
-                                <th width="18%">项目名称</th>
-                                <th width="15%">年收入 (含应收)</th>
-                                <th width="14%">占全年收入比例</th>
-                                <th width="15%">年成本 (项目直接成本)</th>
-                                <th width="15%">项目年利润</th>
-                                <th width="15%">利润率</th>
+                                <th width="8%" style="text-align:center;">排名</th><th width="18%">项目名称</th><th width="15%">年收入 (含应收)</th>
+                                <th width="14%">占全年收入比例</th><th width="15%">年成本 (直接成本)</th><th width="15%">项目年利润</th><th width="15%">利润率</th>
                             </tr>
                         </thead>
-                        <tbody id="table-annual-projects">
-                            <!-- JS 动态渲染 -->
-                        </tbody>
+                        <tbody id="table-annual-projects"></tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- ================= 新增：页面 3：系统设置与维护 ================= -->
+    <!-- ================= 页面 3：系统设置 ================= -->
     <div id="page-settings" class="page">
         <div class="container">
             <div class="header">
@@ -428,39 +411,48 @@
             </div>
             
             <div class="card" style="max-width: 800px;">
-                <h2 class="section-title">📦 数据备份与恢复</h2>
+                <h2 class="section-title">☁️ 数据云端同步与备份</h2>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6;">
-                    当前系统的所有财务数据均采用**浏览器本地存储技术（localStorage）**，未连接任何外部云服务器。
-                    <br>
-                    这保证了数据的绝对隐私和安全，但也意味着**如果清除了浏览器缓存，数据将会丢失**。
-                    请养成定期点击下方按钮导出数据包（JSON文件）的习惯。
+                    当前系统已接入 Hostinger 云端 API。您的每一次录入和修改，都会自动通过网络保存在服务器的 <code>finance_data.json</code> 文件中。<br>
+                    为了防止意外覆盖或数据清空，建议您定期将云端数据导出为本地备份。
                 </p>
                 
                 <div style="display: flex; gap: 16px; align-items: center;">
-                    <!-- 导出按钮 -->
-                    <button class="btn-action" style="background-color: var(--profit-color);" onclick="exportBackupData()">
-                        ⬇️ 导出全部数据 (JSON)
-                    </button>
-                    
-                    <!-- 导入按钮及其隐藏的文件选择器 -->
-                    <button class="btn-action" style="background-color: var(--expense-color);" onclick="document.getElementById('import-file').click()">
-                        ⬆️ 导入备份文件 (JSON)
-                    </button>
+                    <button class="btn-action" style="background-color: var(--profit-color);" onclick="exportBackupData()">⬇️ 导出全部云端数据 (JSON)</button>
+                    <button class="btn-action" style="background-color: var(--expense-color);" onclick="document.getElementById('import-file').click()">⬆️ 恢复本地备份到云端 (覆盖)</button>
                     <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importBackupData(event)">
                 </div>
             </div>
         </div>
     </div>
-    <!-- ================= 新增结束 ================= -->
 
-   <script>
-        // ================= 1. 数据结构初始化 (改为云端互通版) =================
-        // 初始化为空数组，等待从服务器加载
-        let dataStore = {
-            projects: [],
-            income: [],
-            expense: []
-        };
+    <!-- ================= 编辑项目模态框 ================= -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeEditModal()">&times;</span>
+            <h2 class="section-title" style="margin-bottom: 20px; font-size: 1.2rem; border:none; padding:0;">✏️ 编辑项目信息</h2>
+            
+            <form id="form-edit-project" class="inline-form grid-1" style="border:none; padding:0;">
+                <input type="hidden" id="edit-prj-id">
+                <div class="form-group"><label>项目名称</label><input type="text" id="edit-prj-name" class="form-control" required></div>
+                <div class="form-group"><label>客户公司</label><input type="text" id="edit-prj-client" class="form-control" required></div>
+                <div class="form-group"><label>项目经理</label><input type="text" id="edit-prj-manager" class="form-control" required></div>
+                <div class="form-group"><label>项目状态</label>
+                    <select id="edit-prj-status" class="form-control" required>
+                        <option value="进行中">进行中</option>
+                        <option value="已完成">已完成</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>合同金额 (原币)</label><input type="number" id="edit-prj-amount" class="form-control" step="0.01" min="0" required></div>
+                <button type="submit" class="btn-submit btn-primary" style="margin-top: 15px; padding: 12px;">保存修改并同步</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ================= 1. 数据结构与云端通信逻辑 =================
+        let dataStore = { projects: [], income:[], expense:[] };
+        const syncStatusEl = document.getElementById('sync-status');
 
         const todayDate = new Date();
         const currentYearStr = todayDate.getFullYear().toString();
@@ -474,92 +466,89 @@
         document.getElementById('inc-date').value = todayStr;
         document.getElementById('exp-date').value = todayStr;
 
-        // ================= 新增：从服务器加载数据 =================
+        // 【新增】从 Hostinger 服务器获取数据
         async function loadDataFromServer() {
             try {
+                syncStatusEl.innerText = "⏳ 正在同步...";
+                syncStatusEl.style.display = "flex";
+                syncStatusEl.style.color = "#f59e0b";
+
                 const response = await fetch('api.php');
                 if (response.ok) {
                     const serverData = await response.json();
-                    // 将服务器数据赋值给本地变量，兼容空数据的情况
-                    dataStore.projects = serverData.projects || [];
+                    dataStore.projects = serverData.projects ||[];
                     dataStore.income = serverData.income || [];
-                    dataStore.expense = serverData.expense || [];
+                    dataStore.expense = serverData.expense ||[];
                     
-                    // 数据加载完毕后，刷新页面显示
                     updateMonthlyDashboard();
                     renderAnnualDashboard();
-                    if(typeof renderProjectDropdowns === 'function') renderProjectDropdowns();
+                    
+                    syncStatusEl.innerText = "✅ 已与云端同步";
+                    syncStatusEl.style.color = "#10b981";
                 }
             } catch (error) {
                 console.error("加载数据失败:", error);
-                alert("无法连接到服务器加载数据，请检查网络！");
+                syncStatusEl.innerText = "❌ 连接云端失败";
+                syncStatusEl.style.color = "#ef4444";
+                alert("无法连接到服务器加载数据，请检查网络或确认 api.php 是否已部署！");
             }
         }
 
-        // ================= 修改：将数据保存到服务器 =================
+        // 【修改】将数据保存到 Hostinger 服务器
         async function saveData() {
             try {
+                syncStatusEl.innerText = "⬆️ 正在保存到云端...";
+                syncStatusEl.style.color = "#3b82f6";
+
                 const response = await fetch('api.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dataStore) // 将完整数据打包发给 PHP
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataStore)
                 });
                 
                 if (response.ok) {
-                    // 保存成功后刷新图表
                     updateMonthlyDashboard();
                     renderAnnualDashboard();
-                    if(typeof renderProjectDropdowns === 'function') renderProjectDropdowns();
+                    syncStatusEl.innerText = "✅ 已保存至云端";
+                    setTimeout(() => syncStatusEl.innerText = "✅ 已与云端同步", 2000);
                 } else {
-                    alert("数据保存失败！服务器发生错误。");
+                    throw new Error("HTTP 错误");
                 }
             } catch (error) {
                 console.error("保存数据失败:", error);
-                alert("保存失败，请检查您的网络连接！");
+                syncStatusEl.innerText = "❌ 保存失败";
+                syncStatusEl.style.color = "#ef4444";
+                alert("保存失败，请检查您的网络连接或权限设置！");
             }
         }
 
-        // 在页面刚打开时，自动向服务器请求一次数据
-        window.onload = () => {
-            loadDataFromServer();
-        };
+        // 页面打开时自动读取云端数据
+        window.onload = loadDataFromServer;
 
-        // 全局事件监听 (保留你原有的代码)
         document.getElementById('global-month').addEventListener('change', updateMonthlyDashboard);
-        // ... (下方继续保留你原本的 formatMoney, getProjectById 等所有代码) ...
+        document.getElementById('annual-year').addEventListener('change', renderAnnualDashboard);
 
         function formatMoney(amount) { return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function getProjectById(id) { return dataStore.projects.find(p => p.id === id) || { name: '未知', client: '未知' }; }
 
-        // ================= 2. 页面导航切换 =================
         function switchPage(pageId, btnElement) {
-            // 隐藏所有页面
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            
-            // 切换菜单按钮高亮
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
-
-            // 切换页面时刷新对应数据
             if(pageId === 'page-monthly') updateMonthlyDashboard();
             if(pageId === 'page-annual') renderAnnualDashboard();
         }
 
-        // ================= 3. 月度工作台逻辑 =================
+        // ================= 月度工作台与交互逻辑 =================
         function isSelectedMonth(dateString) { return dateString.startsWith(document.getElementById('global-month').value); }
 
         function toggleCurrencyRate(prefix) {
             const currency = document.getElementById(`${prefix}-currency`).value;
             const rateWrap = document.getElementById(`wrap-${prefix}-rate`);
             const rateInput = document.getElementById(`${prefix}-rate`);
-            if (currency === 'CNY') {
-                rateWrap.style.display = 'none'; rateInput.value = '1.0000';
-            } else {
-                rateWrap.style.display = 'flex'; if(rateInput.value === '1.0000') rateInput.value = '';
-            }
+            if (currency === 'CNY') { rateWrap.style.display = 'none'; rateInput.value = '1.0000'; } 
+            else { rateWrap.style.display = 'flex'; if(rateInput.value === '1.0000') rateInput.value = ''; }
             calculatePreview(prefix);
         }
 
@@ -571,8 +560,7 @@
         }
 
         document.getElementById('inc-currency').addEventListener('change', () => toggleCurrencyRate('inc'));
-        document.getElementById('exp-currency').addEventListener('change', () => toggleCurrencyRate('exp'));
-        ['inc', 'exp'].forEach(prefix => {
+        document.getElementById('exp-currency').addEventListener('change', () => toggleCurrencyRate('exp'));['inc', 'exp'].forEach(prefix => {
             document.getElementById(`${prefix}-amount`).addEventListener('input', () => calculatePreview(prefix));
             document.getElementById(`${prefix}-rate`).addEventListener('input', () => calculatePreview(prefix));
         });
@@ -585,19 +573,12 @@
             expSelect.innerHTML = `<optgroup label="🏢 公司公摊"><option value="ADMIN">🏢 公司公共管理费 (公摊)</option></optgroup><optgroup label="📁 计入项目成本">${projOptions}</optgroup>`;
         }
 
-        // ================= 新增：项目币种折算逻辑 =================
         function toggleProjectCurrencyRate() {
             const currency = document.getElementById('prj-currency').value;
             const rateWrap = document.getElementById('wrap-prj-rate');
             const rateInput = document.getElementById('prj-rate');
-            
-            if (currency === 'CNY') {
-                rateWrap.style.display = 'none'; 
-                rateInput.value = '1.0000'; // CNY强制汇率为1
-            } else {
-                rateWrap.style.display = 'flex'; 
-                if(rateInput.value === '1.0000') rateInput.value = ''; // 提示输入
-            }
+            if (currency === 'CNY') { rateWrap.style.display = 'none'; rateInput.value = '1.0000'; } 
+            else { rateWrap.style.display = 'flex'; if(rateInput.value === '1.0000') rateInput.value = ''; }
             calculateProjectPreview();
         }
 
@@ -607,39 +588,62 @@
             document.getElementById('prj-preview').innerText = `¥ ${formatMoney(amount * rate)}`;
         }
 
-        // 绑定项目表单事件
         document.getElementById('prj-currency').addEventListener('change', toggleProjectCurrencyRate);
         document.getElementById('prj-amount').addEventListener('input', calculateProjectPreview);
         document.getElementById('prj-rate').addEventListener('input', calculateProjectPreview);
 
-        // 初始化执行一次，确保界面默认状态正确
-        toggleProjectCurrencyRate();
-
-        // ================= 新增：删除项目逻辑 =================
-        function deleteProject(id) {
-            if (confirm('⚠️ 危险操作：确定要删除该项目吗？\n删除后，它将从下拉列表和排行中消失。\n（已关联该项目的收入/支出明细不会被删除，但归属将显示为"未知"）。\n\n请确认是否继续？')) {
+        async function deleteProject(id) {
+            if (confirm('⚠️ 危险操作：确定要删除该项目吗？\n删除后，它将从列表中消失。（历史明细将显示为"未知"）。\n\n确定从云端删除吗？')) {
                 dataStore.projects = dataStore.projects.filter(item => item.id !== id);
-                saveData(); // 自动刷新列表并重算统计数据
+                await saveData();
             }
         }
 
-        // ================= 覆盖：重新渲染项目排行榜(含删除按钮和新字段) =================
+        // ================= 编辑项目相关函数 =================
+        function editProject(id) {
+            const p = dataStore.projects.find(item => item.id === id);
+            if(!p) return;
+            
+            document.getElementById('edit-prj-id').value = p.id;
+            document.getElementById('edit-prj-name').value = p.name;
+            document.getElementById('edit-prj-client').value = p.client;
+            document.getElementById('edit-prj-manager').value = p.manager || '';
+            document.getElementById('edit-prj-status').value = p.orderStatus || '进行中';
+            document.getElementById('edit-prj-amount').value = p.contractAmount;
+            
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        document.getElementById('form-edit-project').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-prj-id').value;
+            const pIndex = dataStore.projects.findIndex(item => item.id === id);
+            
+            if(pIndex > -1) {
+                dataStore.projects[pIndex].name = document.getElementById('edit-prj-name').value;
+                dataStore.projects[pIndex].client = document.getElementById('edit-prj-client').value;
+                dataStore.projects[pIndex].manager = document.getElementById('edit-prj-manager').value;
+                dataStore.projects[pIndex].orderStatus = document.getElementById('edit-prj-status').value;
+                dataStore.projects[pIndex].contractAmount = parseFloat(document.getElementById('edit-prj-amount').value);
+                
+                await saveData();
+                closeEditModal();
+            }
+        });
+
         function renderLeaderboard() {
             const tbody = document.getElementById('table-leaderboard');
             tbody.innerHTML = '';
-            if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无项目数据</td></tr>`;
+            if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无数据</td></tr>`;
 
             const projectStats = dataStore.projects.map(p => {
                 let pReceived = 0, pReceivable = 0, pCost = 0;
-                dataStore.income.forEach(inc => {
-                    if (inc.projectId === p.id) {
-                        const val = inc.amount * inc.rate;
-                        inc.status === '已到账' ? pReceived += val : pReceivable += val;
-                    }
-                });
-                dataStore.expense.forEach(exp => {
-                    if (exp.projectId === p.id) pCost += (exp.amount * exp.rate);
-                });
+                dataStore.income.forEach(inc => { if (inc.projectId === p.id) { const val = inc.amount * inc.rate; inc.status === '已到账' ? pReceived += val : pReceivable += val; } });
+                dataStore.expense.forEach(exp => { if (exp.projectId === p.id) pCost += (exp.amount * exp.rate); });
                 return { ...p, pReceived, pReceivable, pCost, actualGrossProfit: pReceived - pCost };
             }).sort((a, b) => b.actualGrossProfit - a.actualGrossProfit);
 
@@ -647,21 +651,20 @@
                 const gpColor = stat.actualGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
                 const cnyContractValue = (stat.contractAmount || 0) * (stat.exchangeRate || 1);
                 
-                // 标签样式判断
-                let statusColor = 'tag-status-on'; // 默认进行中
-                if(stat.orderStatus === '已完成') statusColor = 'tag-admin'; // 紫色
-                if(stat.orderStatus === '已取消') statusColor = 'tag-status-done'; // 灰色
+                let statusColor = 'tag-status-on'; 
+                if(stat.orderStatus === '已完成') statusColor = 'tag-admin'; 
+                
                 const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${stat.orderType}</span>` : '';
 
                 tbody.innerHTML += `<tr>
                     <td>
                         <div style="font-weight:600;">${stat.name}</div>
-                        <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">
-                            ${typeTag}
-                            <span class="tag ${statusColor}">${stat.orderStatus || '进行中'}</span>
-                        </div>
+                        <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">${typeTag}<span class="tag ${statusColor}">${stat.orderStatus || '进行中'}</span></div>
                     </td>
-                    <td style="color:var(--text-muted);">${stat.client}</td>
+                    <td style="color:var(--text-muted);">
+                        <div>${stat.client}</div>
+                        <div style="margin-top:4px; font-size:0.75rem; color:#8b5cf6;">👤 ${stat.manager || '未指定'}</div>
+                    </td>
                     <td>
                         <div style="color:var(--text-main); font-weight:600;">¥ ${formatMoney(cnyContractValue)}</div>
                         ${stat.currency && stat.currency !== 'CNY' ? `<div style="font-size:0.75rem; color:var(--text-muted);">原币: ${stat.contractAmount} ${stat.currency}</div>` : ''}
@@ -671,6 +674,8 @@
                     <td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
                     <td style="font-weight:700; color:${gpColor};">¥ ${formatMoney(stat.actualGrossProfit)}</td>
                     <td>
+                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-bottom:8px; font-size:0.8rem; border:none; cursor:pointer;" onclick="editProject('${stat.id}')">✏️ 编辑</button>
+                        <br>
                         <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0; font-size:0.8rem; border:none; cursor:pointer;" onclick="deleteProject('${stat.id}')">❌ 删除</button>
                     </td>
                 </tr>`;
@@ -679,15 +684,8 @@
 
         function renderOverview() {
             let monthReceived = 0, monthReceivable = 0, projectCost = 0, adminExpense = 0;
-
-            dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => {
-                const val = item.amount * item.rate;
-                item.status === '已到账' ? monthReceived += val : monthReceivable += val;
-            });
-            dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => {
-                const val = item.amount * item.rate;
-                item.projectId === 'ADMIN' ? adminExpense += val : projectCost += val;
-            });
+            dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { const val = item.amount * item.rate; item.status === '已到账' ? monthReceived += val : monthReceivable += val; });
+            dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { const val = item.amount * item.rate; item.projectId === 'ADMIN' ? adminExpense += val : projectCost += val; });
 
             const totalIncome = monthReceived + monthReceivable;
             const netProfit = totalIncome - projectCost - adminExpense;
@@ -698,321 +696,154 @@
             document.getElementById('stat-income-total').innerText = `包含应收总计: ¥ ${formatMoney(totalIncome)}`;
             document.getElementById('stat-proj-cost').innerText = `¥ ${formatMoney(projectCost)}`;
             document.getElementById('stat-admin-exp').innerText = `¥ ${formatMoney(adminExpense)}`;
-            
-            const adminRateEl = document.getElementById('stat-admin-rate');
-            adminRateEl.innerText = `${adminRate.toFixed(2)}%`;
-            adminRateEl.style.color = adminRate > 15 ? 'var(--expense-color)' : 'var(--text-main)';
-
-            const netProfitEl = document.getElementById('stat-net-profit');
-            netProfitEl.innerText = `¥ ${formatMoney(netProfit)}`;
-            netProfitEl.style.color = netProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            const adminRateEl = document.getElementById('stat-admin-rate'); adminRateEl.innerText = `${adminRate.toFixed(2)}%`; adminRateEl.style.color = adminRate > 15 ? 'var(--expense-color)' : 'var(--text-main)';
+            const netProfitEl = document.getElementById('stat-net-profit'); netProfitEl.innerText = `¥ ${formatMoney(netProfit)}`; netProfitEl.style.color = netProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
             document.getElementById('stat-net-margin').innerText = `${netMargin.toFixed(2)}%`;
         }
 
         function getAmountHtml(item, isIncome) {
             const cnyTotal = item.amount * item.rate;
             const colorClass = isIncome ? 'text-profit' : 'text-expense';
-            return item.currency === 'CNY' 
-                ? `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span>`
-                : `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span><span class="text-muted-sm">原币: ${item.amount} ${item.currency}</span>`;
+            return item.currency === 'CNY' ? `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span>` : `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span><span class="text-muted-sm">原币: ${item.amount} ${item.currency}</span>`;
         }
 
         function renderTables() {
-            const incTbody = document.getElementById('table-income');
-            incTbody.innerHTML = '';
+            const incTbody = document.getElementById('table-income'); incTbody.innerHTML = '';
             const incData = dataStore.income.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
             if(incData.length === 0) incTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
-            
             incData.forEach(item => {
                 const statusTag = item.status === '已到账' ? 'tag-status-on' : 'tag-status-off';
-                incTbody.innerHTML += `<tr>
-                    <td>${item.date}</td><td style="font-weight:600;">${getProjectById(item.projectId).name}</td>
-                    <td><span class="tag ${statusTag}">${item.status}</span></td><td>${getAmountHtml(item, true)}</td>
-                    <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
-                    <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button></td>
-                </tr>`;
+                incTbody.innerHTML += `<tr><td>${item.date}</td><td style="font-weight:600;">${getProjectById(item.projectId).name}</td><td><span class="tag ${statusTag}">${item.status}</span></td><td>${getAmountHtml(item, true)}</td><td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td><td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button></td></tr>`;
             });
 
-            const expTbody = document.getElementById('table-expense');
-            expTbody.innerHTML = '';
+            const expTbody = document.getElementById('table-expense'); expTbody.innerHTML = '';
             const expData = dataStore.expense.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
             if(expData.length === 0) expTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
-
             expData.forEach(item => {
-                const typeHtml = item.projectId === 'ADMIN' 
-                    ? `<span class="tag tag-admin">管理费用</span>` 
-                    : `<span class="tag tag-project" style="margin-bottom:4px;">项目成本</span><br><span style="font-size:0.75rem;">${getProjectById(item.projectId).name}</span>`;
-                expTbody.innerHTML += `<tr>
-                    <td>${item.date}</td><td>${typeHtml}</td><td>${item.category}</td>
-                    <td>${getAmountHtml(item, false)}</td><td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
-                    <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button></td>
-                </tr>`;
+                const typeHtml = item.projectId === 'ADMIN' ? `<span class="tag tag-admin">管理费用</span>` : `<span class="tag tag-project" style="margin-bottom:4px;">项目成本</span><br><span style="font-size:0.75rem;">${getProjectById(item.projectId).name}</span>`;
+                expTbody.innerHTML += `<tr><td>${item.date}</td><td>${typeHtml}</td><td>${item.category}</td><td>${getAmountHtml(item, false)}</td><td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td><td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button></td></tr>`;
             });
         }
 
-        // ================= 4. 年度经营分析逻辑 =================
         function renderAnnualDashboard() {
-            const year = document.getElementById('annual-year').value;
-            if(!year) return;
-
-            let annTotalIncome = 0;
-            let annReceived = 0;
-            let annProjectCost = 0;
-            let annAdminCost = 0;
-
+            const year = document.getElementById('annual-year').value; if(!year) return;
+            let annTotalIncome = 0, annReceived = 0, annProjectCost = 0, annAdminCost = 0;
             const yearIncome = dataStore.income.filter(item => item.date.startsWith(year));
             const yearExpense = dataStore.expense.filter(item => item.date.startsWith(year));
 
-            // 1. 汇总全局指标
-            yearIncome.forEach(item => {
-                const val = item.amount * item.rate;
-                annTotalIncome += val;
-                if(item.status === '已到账') annReceived += val;
-            });
-
-            yearExpense.forEach(item => {
-                const val = item.amount * item.rate;
-                if(item.projectId === 'ADMIN') annAdminCost += val;
-                else annProjectCost += val;
-            });
+            yearIncome.forEach(item => { const val = item.amount * item.rate; annTotalIncome += val; if(item.status === '已到账') annReceived += val; });
+            yearExpense.forEach(item => { const val = item.amount * item.rate; if(item.projectId === 'ADMIN') annAdminCost += val; else annProjectCost += val; });
 
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
 
-            // 渲染顶栏指标
             document.getElementById('ann-income-total').innerText = `¥ ${formatMoney(annTotalIncome)}`;
             document.getElementById('ann-income-received').innerText = `¥ ${formatMoney(annReceived)}`;
             document.getElementById('ann-proj-cost').innerText = `¥ ${formatMoney(annProjectCost)}`;
             document.getElementById('ann-admin-cost').innerText = `¥ ${formatMoney(annAdminCost)}`;
             
-            const netProfitEl = document.getElementById('ann-net-profit');
-            netProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`;
-            netProfitEl.style.color = annNetProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
-            document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`;
-            document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            const netProfitEl = document.getElementById('ann-net-profit'); netProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`; netProfitEl.style.color = annNetProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+            document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`; document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
 
-            // 2. 项目年度排行榜
-            const tbody = document.getElementById('table-annual-projects');
-            tbody.innerHTML = '';
-
-            if (dataStore.projects.length === 0) {
-                return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">本年度暂无项目数据</td></tr>`;
-            }
+            const tbody = document.getElementById('table-annual-projects'); tbody.innerHTML = '';
+            if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">本年度暂无项目数据</td></tr>`;
 
             const projectStats = dataStore.projects.map(p => {
-                let pInc = 0;
-                let pCost = 0;
-                
-                // 年收入（含应收）
+                let pInc = 0, pCost = 0;
                 yearIncome.filter(i => i.projectId === p.id).forEach(i => pInc += i.amount * i.rate);
-                // 年成本
                 yearExpense.filter(e => e.projectId === p.id).forEach(e => pCost += e.amount * e.rate);
-                
-                const pProfit = pInc - pCost;
-                const pMargin = pInc > 0 ? (pProfit / pInc) * 100 : 0;
-                const pShare = annTotalIncome > 0 ? (pInc / annTotalIncome) * 100 : 0;
-
+                const pProfit = pInc - pCost; const pMargin = pInc > 0 ? (pProfit / pInc) * 100 : 0; const pShare = annTotalIncome > 0 ? (pInc / annTotalIncome) * 100 : 0;
                 return { name: p.name, pInc, pCost, pProfit, pMargin, pShare };
             });
 
-            // 过滤掉该年度彻底没有收入也没有支出的历史沉寂项目，并按收入降序
             const activeProjects = projectStats.filter(stat => stat.pInc > 0 || stat.pCost > 0).sort((a,b) => b.pInc - a.pInc);
-
-            if (activeProjects.length === 0) {
-                return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">当前选择年份无任何项目流水数据</td></tr>`;
-            }
+            if (activeProjects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">无流水数据</td></tr>`;
 
             activeProjects.forEach((stat, index) => {
                 const profitColor = stat.pProfit < 0 ? 'var(--expense-color)' : 'var(--income-color)';
-                
-                let rankHtml = '';
-                if(index === 0) rankHtml = '<span class="rank-medal">🥇</span>';
-                else if(index === 1) rankHtml = '<span class="rank-medal">🥈</span>';
-                else if(index === 2) rankHtml = '<span class="rank-medal">🥉</span>';
-                else rankHtml = `<span class="rank-num">${index + 1}</span>`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="text-align:center;">${rankHtml}</td>
-                        <td style="font-weight:600; font-size:0.9rem;">${stat.name}</td>
-                        <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pInc)}</td>
-                        <td style="color:var(--text-muted);">${stat.pShare.toFixed(2)}%</td>
-                        <td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
-                        <td style="font-weight:700; color:${profitColor};">¥ ${formatMoney(stat.pProfit)}</td>
-                        <td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td>
-                    </tr>
-                `;
+                let rankHtml = index === 0 ? '<span class="rank-medal">🥇</span>' : index === 1 ? '<span class="rank-medal">🥈</span>' : index === 2 ? '<span class="rank-medal">🥉</span>' : `<span class="rank-num">${index + 1}</span>`;
+                tbody.innerHTML += `<tr><td style="text-align:center;">${rankHtml}</td><td style="font-weight:600; font-size:0.9rem;">${stat.name}</td><td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pInc)}</td><td style="color:var(--text-muted);">${stat.pShare.toFixed(2)}%</td><td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td><td style="font-weight:700; color:${profitColor};">¥ ${formatMoney(stat.pProfit)}</td><td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td></tr>`;
             });
         }
 
-        // ================= 5. 数据录入提交 =================
-// ================= 覆盖：项目提交表单逻辑 (含新字段) =================
-        document.getElementById('form-project').addEventListener('submit', function(e) {
+        // ================= 表单提交与云端操作 =================
+        document.getElementById('form-project').addEventListener('submit', async function(e) {
             e.preventDefault();
             dataStore.projects.push({
                 id: 'PRJ_' + Date.now().toString(),
-                name: document.getElementById('prj-name').value,
+                name: document.getElementById('prj-name').value, 
                 client: document.getElementById('prj-client').value,
-                orderType: document.getElementById('prj-order-type').value,
+                manager: document.getElementById('prj-manager').value,
+                orderType: document.getElementById('prj-order-type').value, 
                 orderStatus: document.getElementById('prj-order-status').value,
-                currency: document.getElementById('prj-currency').value,
+                currency: document.getElementById('prj-currency').value, 
                 contractAmount: parseFloat(document.getElementById('prj-amount').value),
-                exchangeRate: parseFloat(document.getElementById('prj-rate').value),
+                exchangeRate: parseFloat(document.getElementById('prj-rate').value), 
                 startDate: document.getElementById('prj-date').value
             });
-            saveData();
-            this.reset();
-            document.getElementById('prj-date').value = todayStr;
-            document.getElementById('prj-currency').value = 'CNY'; // 恢复默认
-            toggleProjectCurrencyRate(); // 重置UI
+            await saveData();
+            this.reset(); document.getElementById('prj-date').value = todayStr; document.getElementById('prj-currency').value = 'CNY'; toggleProjectCurrencyRate();
         });
 
-        document.getElementById('form-income').addEventListener('submit', function(e) {
+        document.getElementById('form-income').addEventListener('submit', async function(e) {
             e.preventDefault();
             if(!document.getElementById('inc-project').value) return alert('请选择项目！');
             dataStore.income.push({
                 id: 'INC_' + Date.now(),
-                date: document.getElementById('inc-date').value,
-                projectId: document.getElementById('inc-project').value,
-                currency: document.getElementById('inc-currency').value,
-                amount: parseFloat(document.getElementById('inc-amount').value),
-                rate: parseFloat(document.getElementById('inc-rate').value),
-                status: document.getElementById('inc-status').value,
-                remark: document.getElementById('inc-remark').value
+                date: document.getElementById('inc-date').value, projectId: document.getElementById('inc-project').value,
+                currency: document.getElementById('inc-currency').value, amount: parseFloat(document.getElementById('inc-amount').value),
+                rate: parseFloat(document.getElementById('inc-rate').value), status: document.getElementById('inc-status').value, remark: document.getElementById('inc-remark').value
             });
-            saveData();
-            document.getElementById('inc-amount').value = '';
-            document.getElementById('inc-remark').value = '';
-            document.getElementById('inc-currency').value = 'CNY';
-            toggleCurrencyRate('inc');
+            await saveData();
+            document.getElementById('inc-amount').value = ''; document.getElementById('inc-remark').value = ''; document.getElementById('inc-currency').value = 'CNY'; toggleCurrencyRate('inc');
         });
 
-        document.getElementById('form-expense').addEventListener('submit', function(e) {
+        document.getElementById('form-expense').addEventListener('submit', async function(e) {
             e.preventDefault();
             dataStore.expense.push({
                 id: 'EXP_' + Date.now(),
-                date: document.getElementById('exp-date').value,
-                projectId: document.getElementById('exp-project-select').value,
-                category: document.getElementById('exp-category').value,
-                currency: document.getElementById('exp-currency').value,
-                amount: parseFloat(document.getElementById('exp-amount').value),
-                rate: parseFloat(document.getElementById('exp-rate').value),
-                remark: document.getElementById('exp-remark').value
+                date: document.getElementById('exp-date').value, projectId: document.getElementById('exp-project-select').value,
+                category: document.getElementById('exp-category').value, currency: document.getElementById('exp-currency').value,
+                amount: parseFloat(document.getElementById('exp-amount').value), rate: parseFloat(document.getElementById('exp-rate').value), remark: document.getElementById('exp-remark').value
             });
-            saveData();
-            document.getElementById('exp-amount').value = '';
-            document.getElementById('exp-remark').value = '';
-            document.getElementById('exp-currency').value = 'CNY';
-            toggleCurrencyRate('exp');
+            await saveData();
+            document.getElementById('exp-amount').value = ''; document.getElementById('exp-remark').value = ''; document.getElementById('exp-currency').value = 'CNY'; toggleCurrencyRate('exp');
         });
 
-        function deleteRecord(type, id) {
-            if (confirm('确定删除此流水吗？')) { dataStore[type] = dataStore[type].filter(item => item.id !== id); saveData(); }
+        async function deleteRecord(type, id) {
+            if (confirm('确定从云端彻底删除此流水吗？')) { dataStore[type] = dataStore[type].filter(item => item.id !== id); await saveData(); }
         }
 
-        // ================= 6. Excel 导出功能 =================
         function exportExcel() {
             const currentMonth = document.getElementById('global-month').value;
             if (!currentMonth) return alert('请先选择要导出的月份！');
             let csvContent = "\uFEFF流水类型,发生日期,资金状态/科目,归属项目/类型,原币币种,原币金额,手工汇率,折合人民币(CNY),备注\n";
-
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(inc => {
-                const pName = getProjectById(inc.projectId).name;
-                const cnyVal = (inc.amount * inc.rate).toFixed(2);
-                const remark = (inc.remark || '').replace(/,/g, '，'); 
+                const pName = getProjectById(inc.projectId).name; const cnyVal = (inc.amount * inc.rate).toFixed(2); const remark = (inc.remark || '').replace(/,/g, '，'); 
                 csvContent += `收入,${inc.date},${inc.status},${pName},${inc.currency},${inc.amount},${inc.rate},${cnyVal},${remark}\n`;
             });
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(exp => {
-                const pName = exp.projectId === 'ADMIN' ? '公司公摊管理费' : getProjectById(exp.projectId).name;
-                const cnyVal = (exp.amount * exp.rate).toFixed(2);
-                const remark = (exp.remark || '').replace(/,/g, '，');
+                const pName = exp.projectId === 'ADMIN' ? '公司公摊管理费' : getProjectById(exp.projectId).name; const cnyVal = (exp.amount * exp.rate).toFixed(2); const remark = (exp.remark || '').replace(/,/g, '，');
                 csvContent += `支出,${exp.date},${exp.category},${pName},${exp.currency},${exp.amount},${exp.rate},${cnyVal},${remark}\n`;
             });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `内部财务流水_${currentMonth}.csv`;
-            link.click();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `云端财务流水_${currentMonth}.csv`; link.click();
         }
 
-        // ================= 新增：7. JSON 数据备份与恢复功能 =================
         function exportBackupData() {
-            const payload = {
-                version: "v2",
-                exportDate: new Date().toISOString(),
-                data: {
-                    projects: dataStore.projects,
-                    income: dataStore.income,
-                    expense: dataStore.expense
-                }
-            };
-
-            const jsonStr = JSON.stringify(payload, null, 2);
-            const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
-
-            const d = new Date();
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const filename = `finance_backup_${yyyy}-${mm}-${dd}.json`;
-
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
+            const payload = { version: "v2", exportDate: new Date().toISOString(), data: dataStore };
+            const jsonStr = JSON.stringify(payload, null, 2); const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+            const d = new Date(); const filename = `云端财务备份_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename; link.click();
         }
 
-                function importBackupData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
+        function importBackupData(event) {
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-
-                    if (!parsed.version || !parsed.data) {
-                        alert("导入失败：文件格式不正确（未找到版本或数据主体）。");
-                        return;
-                    }
-
-                    if (confirm("导入将覆盖当前所有数据，确定继续？")) {
-                        localStorage.setItem('internal_fin_projects_v2', JSON.stringify(parsed.data.projects || []));
-                        localStorage.setItem('internal_fin_income_v2', JSON.stringify(parsed.data.income || []));
-                        localStorage.setItem('internal_fin_expense_v2', JSON.stringify(parsed.data.expense || []));
-
-                        alert("数据恢复成功！页面将刷新。");
-                        location.reload();
-                    }
-
-                } catch (err) {
-                    alert("导入失败：文件解析错误。");
-                }
-            };
-
-            reader.readAsText(file);
-
-            // 清空 input，允许重复导入同一个文件
-            event.target.value = '';
-        }
-        
-function updateMonthlyDashboard() {
-    renderProjectDropdowns();
-    renderLeaderboard();
-    renderOverview();
-    renderTables();
-}
-        
-        // 页面初始化
-        updateMonthlyDashboard();
-        renderAnnualDashboard();
-    </script>
-
-</body>
-</html>
-
-
-
-
-
+                    if (!parsed.version || !parsed.data) return alert("导入失败：文件格式不正确");
+                    if (confirm("⚠️ 注意：这将完全覆盖服务器云端现有的所有数据！\n确定继续？")) {
+                        dataStore.projects = parsed.data.projects ||[];
+                        dataStore.income = parsed.data.income ||[];
+                        dataStore.expense = parsed.data.expense ||
