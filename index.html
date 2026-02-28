@@ -657,7 +657,7 @@
             if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无数据</td></tr>`;
             
             const projectStats = dataStore.projects.map(p => {
-                let pReceived = 0, pReceivable = 0, pCost = 0;
+                let pReceived = 0, pReceivable = 0, pPaidCost = 0, pTotalCost = 0;
                 dataStore.income.forEach(inc => { 
                     if (inc.projectId === p.id) { 
                         const val = inc.amount * inc.rate; 
@@ -665,9 +665,14 @@
                     } 
                 });
                 dataStore.expense.forEach(exp => { 
-                    if (exp.projectId === p.id) pCost += (exp.amount * exp.rate); 
+                    if (exp.projectId === p.id) {
+                        const val = exp.amount * exp.rate;
+                        pTotalCost += val; 
+                        if ((exp.status || '已支付') === '已支付') pPaidCost += val; 
+                    }
                 });
-                return { ...p, pReceived, pReceivable, pCost, actualGrossProfit: pReceived - pCost };
+                // 修改：排行榜真实毛利 = 已到账收入 - 已支付成本
+                return { ...p, pReceived, pReceivable, pTotalCost, pPaidCost, actualGrossProfit: pReceived - pPaidCost };
             }).sort((a, b) => b.actualGrossProfit - a.actualGrossProfit);
 
             projectStats.forEach(stat => {
@@ -1011,6 +1016,7 @@
     </script>
 </body>
 </html>
+
 
 
 
