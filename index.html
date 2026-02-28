@@ -316,18 +316,24 @@
 
                 <div class="card">
                     <h2 class="section-title" style="color: var(--expense-color);">💸 支出/费用登记</h2>
+                    <!-- 【替换位置 2】替换旧的 form-expense -->
                     <form class="inline-form grid-4" id="form-expense">
                         <div class="form-group"><label>发生日期</label><input type="date" id="exp-date" class="form-control" required></div>
                         <div class="form-group" style="grid-column: span 2;"><label>费用归属</label><select id="exp-project-select" class="form-control" required></select></div>
+                        
+                        <!-- 新增：付款状态字段 -->
+                        <div class="form-group"><label>付款状态</label>
+                            <select id="exp-status" class="form-control" required>
+                                <option value="已支付" selected>🟢 已支付</option>
+                                <option value="应付">🟠 应付 (未付)</option>
+                            </select>
+                        </div>
+                        
                         <div class="form-group"><label>科目</label>
                             <select id="exp-category" class="form-control" required>
-                                <option value="货款">货款</option>
-                                <option value="物流">物流</option>
-                                <option value="工资/社保">工资/社保</option>
-                                <option value="房租/水电">房租/水电</option>
-                                <option value="差旅/招待">差旅/招待</option>
-                                <option value="营销/广告">营销/广告</option>
-                                <option value="其他">其他</option>
+                                <option value="货款">货款</option><option value="物流">物流</option><option value="工资/社保">工资/社保</option>
+                                <option value="房租/水电">房租/水电</option><option value="差旅/招待">差旅/招待</option>
+                                <option value="营销/广告">营销/广告</option><option value="其他">其他</option>
                             </select>
                         </div>
                         <div class="form-group"><label>币种</label>
@@ -337,11 +343,11 @@
                             </select>
                         </div>
                         <div class="form-group"><label>金额</label><input type="number" id="exp-amount" class="form-control" step="0.01" min="0" required></div>
-                        <div class="form-group" id="wrap-exp-rate" style="display: none;">
+                        <div class="form-group" style="grid-column: span 1;"><label>备注</label><input type="text" id="exp-remark" class="form-control" placeholder="选填，如：报销机票"></div>
+                        <div class="form-group" id="wrap-exp-rate" style="display: none; grid-column: span 4;">
                             <label style="color:#f43f5e;">实时汇率 (非CNY必填)</label>
                             <input type="number" id="exp-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" required>
                         </div>
-                        <div class="form-group" style="grid-column: span 1;"><label>备注</label><input type="text" id="exp-remark" class="form-control" placeholder="选填，如：报销机票"></div>
                         <div class="form-group calc-preview full-span">👉 折合人民币：<span id="exp-preview" class="text-expense">¥ 0.00</span></div>
                         <button type="submit" class="btn-submit btn-expense full-span">录入财务支出账</button>
                     </form>
@@ -988,4 +994,5 @@
     </script>
 </body>
 </html>
+
 
