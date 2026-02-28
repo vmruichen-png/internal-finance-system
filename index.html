@@ -1036,53 +1036,96 @@ function toggleSupplier(trClass, iconElement) {
             const compMap = {};
             const mgrMap = {};
             
-            // 遍历项目收集基本信息（直接智能兼容旧数据）
+            // 1. 初始化映射表：从项目列表建立客户公司与经理的层级关系
             dataStore.projects.forEach(p => {
                 const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
                 const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
                 
-                if(!compMap[cId]) compMap[cId] = { name: p.client || '未分类公司', income: 0, expense: 0, profit: 0, managers: {} };
-                if(!compMap[cId].managers[mId]) compMap[cId].managers[mId] = { name: p.manager || '未分类经理', income: 0, expense: 0, projects:[] };
-                // 【修改】：给 mgrMap 增加 projects 数组，用来装项目明细
-                if(!mgrMap[mId]) mgrMap[mId] = { name: p.manager || '未分类经理', totalAmount: 0, projects:[] };
+                if(!compMap[cId]) {
+                    compMap[cId] = { 
+                        name: p.client || '未分类公司', 
+                        usdIncome: 0,       // 【新增】USD 专项统计
+                        cnyIncome: 0,       // 【新增】CNY 专项统计
+                        incomeCNY: 0,       // 总收入折合
+                        expenseCNY: 0,      // 总支出折合
+                        profitCNY: 0,       // 利润折合
+                        managers: {} 
+                    };
+                }
                 
-                // 按原币种合同金额统计收入
-                const contractVal = p.contractAmount || 0;
-                compMap[cId].income += contractVal;
-                compMap[cId].managers[mId].income += contractVal;
-                mgrMap[mId].totalAmount += contractVal;
-                
-                compMap[cId].managers[mId].projects.push({ id: p.id, name: p.name, income: contractVal, expense: 0 });
-                // 【新增】：把具体项目存入该经理的下拉列表中
-                mgrMap[mId].projects.push({ name: p.name, amount: contractVal, client: p.client });
+                if(!compMap[cId].managers[mId]) {
+                    compMap[cId].managers[mId] = { name: p.manager || '未分类经理', incomeCNY: 0, expenseCNY: 0, projects: [] };
+                }
+
+                if(!mgrMap[mId]) {
+                    mgrMap[mId] = { name: p.manager || '未分类经理', totalAmountCNY: 0, projects: [] };
+                }
+
+                // 初始化项目明细占位（用于后续展开查看）
+                if(!compMap[cId].managers[mId].projects.find(pr => pr.id === p.id)) {
+                    compMap[cId].managers[mId].projects.push({ id: p.id, name: p.name, usd: 0, cny: 0, totalCNY: 0, expenseCNY: 0 });
+                    mgrMap[mId].projects.push({ name: p.name, amountCNY: 0, client: p.client });
+                }
             });
             
-            // 遍历支出统计项目成本
+            // 2. 核心逻辑修改：从真实的收入流水中按币种统计
+            dataStore.income.forEach(item => {
+                const p = dataStore.projects.find(proj => proj.id === item.projectId);
+                if(p) {
+                    const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
+                    const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
+                    const cnyVal = item.amount * item.rate; // 折算人民币金额
+
+                    if(compMap[cId]) {
+                        // 【统计分类】
+                        if(item.currency === 'USD') compMap[cId].usdIncome += item.amount;
+                        if(item.currency === 'CNY') compMap[cId].cnyIncome += item.amount;
+                        compMap[cId].incomeCNY += cnyVal;
+
+                        // 更新经理和项目明细
+                        compMap[cId].managers[mId].incomeCNY += cnyVal;
+                        const pDetail = compMap[cId].managers[mId].projects.find(pr => pr.id === p.id);
+                        if(pDetail) {
+                            if(item.currency === 'USD') pDetail.usd += item.amount;
+                            if(item.currency === 'CNY') pDetail.cny += item.amount;
+                            pDetail.totalCNY += cnyVal;
+                        }
+                    }
+                    // 更新项目经理排行数据
+                    if(mgrMap[mId]) {
+                        mgrMap[mId].totalAmountCNY += cnyVal;
+                        const mPDetail = mgrMap[mId].projects.find(mp => mp.name === p.name);
+                        if(mPDetail) mPDetail.amountCNY += cnyVal;
+                    }
+                }
+            });
+            
+            // 3. 统计支出流水
             dataStore.expense.forEach(e => {
                 if(e.projectId === 'ADMIN') return;
                 const p = dataStore.projects.find(proj => proj.id === e.projectId);
                 if(p) {
                     const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
                     const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
-                    const expVal = e.amount || 0; // 原币种金额
+                    const expVal = e.amount * e.rate;
                     
-                    if(compMap[cId]) compMap[cId].expense += expVal;
-                    if(compMap[cId] && compMap[cId].managers[mId]) {
-                        compMap[cId].managers[mId].expense += expVal;
-                        const projRef = compMap[cId].managers[mId].projects.find(pr => pr.id === p.id);
-                        if(projRef) projRef.expense += expVal;
+                    if(compMap[cId]) {
+                        compMap[cId].expenseCNY += expVal;
+                        compMap[cId].managers[mId].expenseCNY += expVal;
+                        const pDetail = compMap[cId].managers[mId].projects.find(pr => pr.id === p.id);
+                        if(pDetail) pDetail.expenseCNY += expVal;
                     }
                 }
             });
             
-            // 渲染公司利润排行 (倒序)
-            const compArr = Object.values(compMap).filter(c => c.income > 0 || c.expense > 0);
-            compArr.forEach(c => c.profit = c.income - c.expense);
-            compArr.sort((a, b) => b.profit - a.profit);
+            // 4. 渲染公司排行表
+            const compArr = Object.values(compMap).filter(c => c.incomeCNY > 0 || c.expenseCNY > 0);
+            compArr.forEach(c => c.profitCNY = c.incomeCNY - c.expenseCNY);
+            compArr.sort((a, b) => b.profitCNY - a.profitCNY); // 按利润排序
             
             const tComp = document.getElementById('table-client-company');
             tComp.innerHTML = '';
-            if(compArr.length === 0) tComp.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            if(compArr.length === 0) tComp.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">暂无流水数据</td></tr>';
             
             compArr.forEach((c, idx) => {
                 const trId = `client-comp-${idx}`;
@@ -1090,19 +1133,23 @@ function toggleSupplier(trClass, iconElement) {
                     <tr style="font-weight: 600; background: #fff;">
                         <td style="text-align: center;"><span class="toggle-icon" onclick="toggleSupplier('${trId}', this)">▶</span></td>
                         <td>${c.name}</td>
-                        <td style="color: var(--income-color);">${formatMoney(c.income)}</td>
-                        <td style="color: var(--expense-color);">${formatMoney(c.expense)}</td>
-                        <td style="color: ${c.profit < 0 ? 'var(--expense-color)' : 'var(--profit-color)'};">${formatMoney(c.profit)}</td>
+                        <td style="color: #2563eb;">$ ${formatMoney(c.usdIncome)}</td>
+                        <td style="color: var(--text-main);">¥ ${formatMoney(c.cnyIncome)}</td>
+                        <td style="color: var(--income-color);">¥ ${formatMoney(c.incomeCNY)}</td>
+                        <td style="color: var(--expense-color);">¥ ${formatMoney(c.expenseCNY)}</td>
+                        <td style="color: ${c.profitCNY < 0 ? 'var(--expense-color)' : 'var(--profit-color)'};">¥ ${formatMoney(c.profitCNY)}</td>
                     </tr>
                 `;
+                // 渲染经理和项目的隐藏折叠行
                 Object.values(c.managers).forEach(m => {
                     tComp.innerHTML += `
                         <tr class="sub-row ${trId}">
                             <td></td>
                             <td style="color: var(--admin-color); font-weight:600; padding-left: 10px;">↳ 👤 ${m.name}</td>
-                            <td style="color: var(--income-color); font-size: 0.8rem;">${formatMoney(m.income)}</td>
-                            <td style="color: var(--expense-color); font-size: 0.8rem;">${formatMoney(m.expense)}</td>
-                            <td style="color: var(--text-muted); font-size: 0.8rem;">${formatMoney(m.income - m.expense)}</td>
+                            <td colspan="2" style="text-align:right; color:#999; font-size:0.75rem;">经理小计:</td>
+                            <td style="color: var(--income-color); font-size: 0.8rem;">¥ ${formatMoney(m.incomeCNY)}</td>
+                            <td style="color: var(--expense-color); font-size: 0.8rem;">¥ ${formatMoney(m.expenseCNY)}</td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">¥ ${formatMoney(m.incomeCNY - m.expenseCNY)}</td>
                         </tr>
                     `;
                     m.projects.forEach(p => {
@@ -1110,27 +1157,25 @@ function toggleSupplier(trClass, iconElement) {
                             <tr class="sub-row ${trId}">
                                 <td></td>
                                 <td style="color: var(--text-muted); padding-left: 20px;">↳ 📁 ${p.name}</td>
-                                <td style="color: var(--text-muted); font-size: 0.75rem;">${formatMoney(p.income)}</td>
-                                <td style="color: var(--text-muted); font-size: 0.75rem;">${formatMoney(p.expense)}</td>
-                                <td style="color: var(--text-muted); font-size: 0.75rem;">${formatMoney(p.income - p.expense)}</td>
+                                <td style="color: #60a5fa; font-size: 0.75rem;">$ ${formatMoney(p.usd)}</td>
+                                <td style="color: #94a3b8; font-size: 0.75rem;">¥ ${formatMoney(p.cny)}</td>
+                                <td style="color: var(--text-muted); font-size: 0.75rem;">¥ ${formatMoney(p.totalCNY)}</td>
+                                <td style="color: var(--text-muted); font-size: 0.75rem;">¥ ${formatMoney(p.expenseCNY)}</td>
+                                <td style="color: var(--text-muted); font-size: 0.75rem;">¥ ${formatMoney(p.totalCNY - p.expenseCNY)}</td>
                             </tr>
                         `;
                     });
                 });
             });
             
-            // 渲染项目经理排行
-            const mgrArr = Object.values(mgrMap).filter(m => m.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount);
+            // 5. 渲染项目经理排行 (逻辑保持，仅确保数据来源是流水汇总)
+            const mgrArr = Object.values(mgrMap).filter(m => m.totalAmountCNY > 0).sort((a, b) => b.totalAmountCNY - a.totalAmountCNY);
             const tMgr = document.getElementById('table-client-manager');
             tMgr.innerHTML = '';
             if(mgrArr.length === 0) tMgr.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无数据</td></tr>';
             mgrArr.forEach((m, idx) => {
                 let rankHtml = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<span class="rank-num">${idx + 1}</span>`;
-                
-                // 【新增】：创建每行的专属 ID
                 const trId = `client-mgr-${idx}`; 
-
-                // 【修改】：在排名后面加入可点击的 ▶ 按钮，主行背景设为白色
                 tMgr.innerHTML += `
                     <tr style="background: #fff; font-weight: 600;">
                         <td style="text-align:center;">
@@ -1138,20 +1183,15 @@ function toggleSupplier(trClass, iconElement) {
                             <span class="toggle-icon" onclick="toggleSupplier('${trId}', this)" style="margin-left: 5px; font-size: 0.8rem;">▶</span>
                         </td>
                         <td style="font-weight:600;">👤 ${m.name}</td>
-                        <td style="color: var(--income-color); font-weight:700;">${formatMoney(m.totalAmount)}</td>
+                        <td style="color: var(--income-color); font-weight:700;">¥ ${formatMoney(m.totalAmountCNY)}</td>
                     </tr>
                 `;
-                
-                // 【新增】：将该经理名下的所有项目按金额降序排列，并作为隐藏的子行渲染
-                m.projects.sort((a,b) => b.amount - a.amount).forEach(p => {
+                m.projects.sort((a,b) => b.amountCNY - a.amountCNY).forEach(p => {
                     tMgr.innerHTML += `
                         <tr class="sub-row ${trId}">
                             <td></td>
-                            <td style="color: var(--text-muted); padding-left: 20px;">
-                                ↳ 📁 ${p.name} 
-                                <span style="font-size: 0.75rem; color: #8b5cf6; margin-left: 5px;">(${p.client || '未知客户'})</span>
-                            </td>
-                            <td style="color: var(--text-muted); font-size: 0.8rem;">${formatMoney(p.amount)}</td>
+                            <td style="color: var(--text-muted); padding-left: 20px;">↳ 📁 ${p.name} <span style="font-size: 0.7rem; color: #8b5cf6;">(${p.client})</span></td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">¥ ${formatMoney(p.amountCNY)}</td>
                         </tr>
                     `;
                 });
@@ -1332,6 +1372,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
