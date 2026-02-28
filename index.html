@@ -706,35 +706,49 @@
         }
 
         function renderOverview() {
-            let monthReceived = 0, monthReceivable = 0, projectCost = 0, adminExpense = 0;
+            let monthReceived = 0, monthReceivable = 0, monthPaidProject = 0, monthPaidAdmin = 0, monthPayable = 0;
+            let monthTotalProject = 0, monthTotalAdmin = 0; // 用于计算账面总成本
+            
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { 
                 const val = item.amount * item.rate; 
                 item.status === '已到账' ? monthReceived += val : monthReceivable += val; 
             });
+            
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { 
                 const val = item.amount * item.rate; 
-                item.projectId === 'ADMIN' ? adminExpense += val : projectCost += val; 
+                const expStatus = item.status || '已支付'; // 兼容老数据
+                
+                // 1. 拆分已支付和应付
+                if (expStatus === '已支付') {
+                    item.projectId === 'ADMIN' ? monthPaidAdmin += val : monthPaidProject += val; 
+                } else {
+                    monthPayable += val; 
+                }
+                
+                // 2. 累加总体账面成本
+                item.projectId === 'ADMIN' ? monthTotalAdmin += val : monthTotalProject += val; 
             });
 
             const totalIncome = monthReceived + monthReceivable;
-            const netProfit = totalIncome - projectCost - adminExpense;
-            const netMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
-            const adminRate = totalIncome > 0 ? (adminExpense / totalIncome) * 100 : 0; 
+            const bookNetProfit = totalIncome - monthTotalProject - monthTotalAdmin; // 包含应付的账面净利
+            const bookNetMargin = totalIncome > 0 ? (bookNetProfit / totalIncome) * 100 : 0;
+            const cashFlow = monthReceived - monthPaidProject - monthPaidAdmin; // 新增：真实现金流
 
             document.getElementById('stat-income-received').innerText = `¥ ${formatMoney(monthReceived)}`;
             document.getElementById('stat-income-total').innerText = `包含应收总计: ¥ ${formatMoney(totalIncome)}`;
-            document.getElementById('stat-proj-cost').innerText = `¥ ${formatMoney(projectCost)}`;
-            document.getElementById('stat-admin-exp').innerText = `¥ ${formatMoney(adminExpense)}`;
+            document.getElementById('stat-proj-cost').innerText = `¥ ${formatMoney(monthPaidProject)}`;
+            document.getElementById('stat-admin-exp').innerText = `¥ ${formatMoney(monthPaidAdmin)}`;
+            document.getElementById('stat-payable-total').innerText = `¥ ${formatMoney(monthPayable)}`;
             
-            const adminRateEl = document.getElementById('stat-admin-rate'); 
-            adminRateEl.innerText = `${adminRate.toFixed(2)}%`;
-            adminRateEl.style.color = adminRate > 15 ? 'var(--expense-color)' : 'var(--text-main)';
+            const cashFlowEl = document.getElementById('stat-cash-flow');
+            cashFlowEl.innerText = `¥ ${formatMoney(cashFlow)}`;
+            cashFlowEl.style.color = cashFlow < 0 ? 'var(--expense-color)' : 'var(--income-color)';
             
             const netProfitEl = document.getElementById('stat-net-profit'); 
-            netProfitEl.innerText = `¥ ${formatMoney(netProfit)}`;
-            netProfitEl.style.color = netProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            netProfitEl.innerText = `¥ ${formatMoney(bookNetProfit)}`;
+            netProfitEl.style.color = bookNetProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
             
-            document.getElementById('stat-net-margin').innerText = `${netMargin.toFixed(2)}%`;
+            document.getElementById('stat-net-margin').innerText = `${bookNetMargin.toFixed(2)}%`;
         }
 
         function getAmountHtml(item, isIncome) {
@@ -997,6 +1011,7 @@
     </script>
 </body>
 </html>
+
 
 
 
