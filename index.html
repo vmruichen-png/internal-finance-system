@@ -498,42 +498,46 @@
         }
 
         // 【修改】将数据保存到 Hostinger 服务器
-        async function saveData() {
-            try {
-                syncStatusEl.innerText = "⬆️ 正在保存到云端...";
-                syncStatusEl.style.color = "#3b82f6";
+async function saveData() {
+    try {
+        syncStatusEl.innerText = "⬆️ 正在保存到云端...";
+        syncStatusEl.style.display = "flex";
+        syncStatusEl.style.color = "#3b82f6";
 
-                const response = await fetch('api.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataStore)
-                });
-                
-                if (response.ok) {
+        const response = await fetch('api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataStore)
+        });
 
-    // 🔥 新增：重新刷新所有界面
-    renderProjectDropdowns();
-    renderLeaderboard();
-    renderTables();
-    updateMonthlyDashboard();
-    renderAnnualDashboard();
+        if (response.ok) {
 
-    syncStatusEl.innerText = "✅ 已保存至云端";
-    setTimeout(() => syncStatusEl.innerText = "✅ 已与云端同步", 2000);
-}
-                    syncStatusEl.innerText = "✅ 已保存至云端";
-                    setTimeout(() => syncStatusEl.innerText = "✅ 已与云端同步", 2000);
-                } else {
-                    throw new Error("HTTP 错误");
-                }
-            } catch (error) {
-                console.error("保存数据失败:", error);
-                syncStatusEl.innerText = "❌ 保存失败";
-                syncStatusEl.style.color = "#ef4444";
-                alert("保存失败，请检查您的网络连接或权限设置！");
-            }
+            // 保存成功后，重新渲染所有界面
+            renderProjectDropdowns();
+            renderLeaderboard();
+            renderTables();
+            updateMonthlyDashboard();
+            renderAnnualDashboard();
+
+            syncStatusEl.innerText = "✅ 已保存至云端";
+            syncStatusEl.style.color = "#10b981";
+
+            setTimeout(() => {
+                syncStatusEl.innerText = "✅ 已与云端同步";
+            }, 2000);
+
+        } else {
+            throw new Error("HTTP 错误");
         }
 
+    } catch (error) {
+        console.error("保存数据失败:", error);
+        syncStatusEl.innerText = "❌ 保存失败";
+        syncStatusEl.style.color = "#ef4444";
+        alert("保存失败，请检查您的网络连接或权限设置！");
+    }
+}
+        
         // 页面打开时自动读取云端数据
         window.onload = loadDataFromServer;
 
@@ -860,6 +864,7 @@
                         dataStore.projects = parsed.data.projects ||[];
                         dataStore.income = parsed.data.income ||[];
                         dataStore.expense = parsed.data.expense ||
+
 
 
 
