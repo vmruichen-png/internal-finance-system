@@ -507,6 +507,8 @@
                     dataStore.projects = serverData.projects || [];
                     dataStore.income = serverData.income ||[];
                     dataStore.expense = serverData.expense ||[];
+                    dataStore.companies = serverData.companies ||[];
+                    dataStore.managers = serverData.managers ||[];
                     
                     updateMonthlyDashboard();
                     renderAnnualDashboard();
@@ -1122,6 +1124,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
