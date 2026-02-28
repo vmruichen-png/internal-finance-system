@@ -157,7 +157,6 @@
 </head>
 <body>
 
-    <!-- ================= 全局顶部导航 ================= -->
     <nav class="top-nav">
         <div class="logo">
             🏢 企业云端财务系统 
@@ -170,7 +169,6 @@
         </div>
     </nav>
 
-    <!-- ================= 页面 1：月度工作台 ================= -->
     <div id="page-monthly" class="page active">
         <div class="container">
             <div class="header">
@@ -184,7 +182,6 @@
                 </div>
             </div>
 
-            <!-- 顶部：财务总览 -->
             <div class="overview-grid grid-5">
                 <div class="card stat-card c-income">
                     <div class="stat-title">本月实际到账 (已到账)</div>
@@ -211,9 +208,7 @@
                 </div>
             </div>
 
-           <!-- 项目立项与核算 -->
-            <div class="projects-layout">
-                <!-- 左侧：立项表单 -->
+           <div class="projects-layout">
                 <div class="card">
                     <h2 class="section-title">📁 新建订单/合同</h2>
                     <form class="inline-form grid-4" id="form-project" style="border:none; padding:0;">
@@ -253,8 +248,7 @@
                         <button type="submit" class="btn-submit btn-primary full-span">立项保存</button>
                     </form>
                 </div>
-                
-                <!-- 右侧：项目核算表 -->
+               
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h2 class="section-title" style="border:none; margin:0;">🏆 项目核算表 (全生命周期)</h2>
@@ -275,9 +269,7 @@
                 </div>
             </div>
 
-            <!-- 录入与明细区 -->
             <div class="management-grid">
-                <!-- 收入录入 -->
                 <div class="card">
                     <h2 class="section-title" style="color: var(--income-color);">💰 收入登记</h2>
                     <form class="inline-form grid-4" id="form-income">
@@ -317,7 +309,6 @@
                     </div>
                 </div>
 
-                <!-- 支出录入 -->
                 <div class="card">
                     <h2 class="section-title" style="color: var(--expense-color);">💸 支出/费用登记</h2>
                     <form class="inline-form grid-4" id="form-expense">
@@ -325,9 +316,12 @@
                         <div class="form-group" style="grid-column: span 2;"><label>费用归属</label><select id="exp-project-select" class="form-control" required></select></div>
                         <div class="form-group"><label>科目</label>
                             <select id="exp-category" class="form-control" required>
-                                <option value="外包服务">外包服务</option><option value="硬件采购">硬件采购</option>
-                                <option value="工资/社保">工资/社保</option><option value="房租/水电">房租/水电</option>
-                                <option value="差旅/招待">差旅/招待</option><option value="营销/广告">营销/广告</option>
+                                <option value="货款">货款</option>
+                                <option value="物流">物流</option>
+                                <option value="工资/社保">工资/社保</option>
+                                <option value="房租/水电">房租/水电</option>
+                                <option value="差旅/招待">差旅/招待</option>
+                                <option value="营销/广告">营销/广告</option>
                                 <option value="其他">其他</option>
                             </select>
                         </div>
@@ -362,7 +356,6 @@
         </div>
     </div>
 
-    <!-- ================= 页面 2：年度经营分析 ================= -->
     <div id="page-annual" class="page">
         <div class="container">
             <div class="header">
@@ -375,7 +368,6 @@
                 </div>
             </div>
 
-            <!-- 年度指标 -->
             <div class="overview-grid grid-6">
                 <div class="card stat-card c-dark"><div class="stat-title">年度总收入 (含应收)</div><div class="stat-value" id="ann-income-total">¥ 0.00</div></div>
                 <div class="card stat-card c-income"><div class="stat-title">年度实际到账收入</div><div class="stat-value text-profit" id="ann-income-received">¥ 0.00</div></div>
@@ -385,7 +377,6 @@
                 <div class="card stat-card"><div class="stat-title">年度净利率</div><div class="stat-value" id="ann-net-margin">0.00%</div></div>
             </div>
 
-            <!-- 排行榜 -->
             <div class="card" style="margin-top: 10px;">
                 <h2 class="section-title">🏆 经营项目年度贡献排行榜 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(默认按年收入降序排序)</span></h2>
                 <div class="table-wrapper" style="max-height: 500px;">
@@ -403,7 +394,6 @@
         </div>
     </div>
 
-    <!-- ================= 页面 3：系统设置 ================= -->
     <div id="page-settings" class="page">
         <div class="container">
             <div class="header">
@@ -426,7 +416,6 @@
         </div>
     </div>
 
-    <!-- ================= 编辑项目模态框 ================= -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeEditModal()">&times;</span>
@@ -451,7 +440,7 @@
 
     <script>
         // ================= 1. 数据结构与云端通信逻辑 =================
-        let dataStore = { projects: [], income:[], expense:[] };
+        let dataStore = { projects:[], income:[], expense:[] };
         const syncStatusEl = document.getElementById('sync-status');
 
         const todayDate = new Date();
@@ -476,15 +465,12 @@
                 const response = await fetch('api.php');
                 if (response.ok) {
                     const serverData = await response.json();
-                    dataStore.projects = serverData.projects ||[];
-                    dataStore.income = serverData.income || [];
+                    dataStore.projects = serverData.projects || [];
+                    dataStore.income = serverData.income ||[];
                     dataStore.expense = serverData.expense ||[];
                     
-                   renderProjectDropdowns();
-                   renderLeaderboard();
-                   renderTables();
-                   updateMonthlyDashboard();
-                   renderAnnualDashboard();
+                    updateMonthlyDashboard();
+                    renderAnnualDashboard();
                     
                     syncStatusEl.innerText = "✅ 已与云端同步";
                     syncStatusEl.style.color = "#10b981";
@@ -498,49 +484,34 @@
         }
 
         // 【修改】将数据保存到 Hostinger 服务器
-async function saveData() {
-    try {
-        syncStatusEl.innerText = "⬆️ 正在保存到云端...";
-        syncStatusEl.style.display = "flex";
-        syncStatusEl.style.color = "#3b82f6";
+        async function saveData() {
+            try {
+                syncStatusEl.innerText = "⬆️ 正在保存到云端...";
+                syncStatusEl.style.color = "#3b82f6";
 
-        const response = await fetch('api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataStore)
-        });
-
-        if (response.ok) {
-
-            // 保存成功后刷新界面
-            renderProjectDropdowns();
-            renderLeaderboard();
-            renderTables();
-            updateMonthlyDashboard();
-            renderAnnualDashboard();
-
-            syncStatusEl.innerText = "✅ 已保存至云端";
-            syncStatusEl.style.color = "#10b981";
-
-            setTimeout(() => {
-                syncStatusEl.innerText = "✅ 已与云端同步";
-            }, 2000);
-
-        } else {
-            throw new Error("HTTP 错误");
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataStore)
+                });
+                if (response.ok) {
+                    updateMonthlyDashboard();
+                    renderAnnualDashboard();
+                    syncStatusEl.innerText = "✅ 已保存至云端";
+                    setTimeout(() => syncStatusEl.innerText = "✅ 已与云端同步", 2000);
+                } else {
+                    throw new Error("HTTP 错误");
+                }
+            } catch (error) {
+                console.error("保存数据失败:", error);
+                syncStatusEl.innerText = "❌ 保存失败";
+                syncStatusEl.style.color = "#ef4444";
+                alert("保存失败，请检查您的网络连接或权限设置！");
+            }
         }
 
-    } catch (error) {
-        console.error("保存数据失败:", error);
-        syncStatusEl.innerText = "❌ 保存失败";
-        syncStatusEl.style.color = "#ef4444";
-        alert("保存失败，请检查您的网络连接或权限设置！");
-    }
-}
-        
         // 页面打开时自动读取云端数据
         window.onload = loadDataFromServer;
-
         document.getElementById('global-month').addEventListener('change', updateMonthlyDashboard);
         document.getElementById('annual-year').addEventListener('change', renderAnnualDashboard);
 
@@ -563,8 +534,13 @@ async function saveData() {
             const currency = document.getElementById(`${prefix}-currency`).value;
             const rateWrap = document.getElementById(`wrap-${prefix}-rate`);
             const rateInput = document.getElementById(`${prefix}-rate`);
-            if (currency === 'CNY') { rateWrap.style.display = 'none'; rateInput.value = '1.0000'; } 
-            else { rateWrap.style.display = 'flex'; if(rateInput.value === '1.0000') rateInput.value = ''; }
+            if (currency === 'CNY') { 
+                rateWrap.style.display = 'none';
+                rateInput.value = '1.0000'; 
+            } else { 
+                rateWrap.style.display = 'flex';
+                if(rateInput.value === '1.0000') rateInput.value = ''; 
+            }
             calculatePreview(prefix);
         }
 
@@ -576,10 +552,15 @@ async function saveData() {
         }
 
         document.getElementById('inc-currency').addEventListener('change', () => toggleCurrencyRate('inc'));
-        document.getElementById('exp-currency').addEventListener('change', () => toggleCurrencyRate('exp'));['inc', 'exp'].forEach(prefix => {
+        document.getElementById('exp-currency').addEventListener('change', () => toggleCurrencyRate('exp'));
+        
+        // 绑定输入事件进行实时计算
+        const prefixes = ['inc', 'exp'];
+        for (let i = 0; i < prefixes.length; i++) {
+            let prefix = prefixes[i];
             document.getElementById(`${prefix}-amount`).addEventListener('input', () => calculatePreview(prefix));
             document.getElementById(`${prefix}-rate`).addEventListener('input', () => calculatePreview(prefix));
-        });
+        }
 
         function renderProjectDropdowns() {
             const incSelect = document.getElementById('inc-project');
@@ -593,8 +574,13 @@ async function saveData() {
             const currency = document.getElementById('prj-currency').value;
             const rateWrap = document.getElementById('wrap-prj-rate');
             const rateInput = document.getElementById('prj-rate');
-            if (currency === 'CNY') { rateWrap.style.display = 'none'; rateInput.value = '1.0000'; } 
-            else { rateWrap.style.display = 'flex'; if(rateInput.value === '1.0000') rateInput.value = ''; }
+            if (currency === 'CNY') { 
+                rateWrap.style.display = 'none';
+                rateInput.value = '1.0000'; 
+            } else { 
+                rateWrap.style.display = 'flex';
+                if(rateInput.value === '1.0000') rateInput.value = ''; 
+            }
             calculateProjectPreview();
         }
 
@@ -607,7 +593,7 @@ async function saveData() {
         document.getElementById('prj-currency').addEventListener('change', toggleProjectCurrencyRate);
         document.getElementById('prj-amount').addEventListener('input', calculateProjectPreview);
         document.getElementById('prj-rate').addEventListener('input', calculateProjectPreview);
-
+        
         async function deleteProject(id) {
             if (confirm('⚠️ 危险操作：确定要删除该项目吗？\n删除后，它将从列表中消失。（历史明细将显示为"未知"）。\n\n确定从云端删除吗？')) {
                 dataStore.projects = dataStore.projects.filter(item => item.id !== id);
@@ -655,11 +641,18 @@ async function saveData() {
             const tbody = document.getElementById('table-leaderboard');
             tbody.innerHTML = '';
             if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无数据</td></tr>`;
-
+            
             const projectStats = dataStore.projects.map(p => {
                 let pReceived = 0, pReceivable = 0, pCost = 0;
-                dataStore.income.forEach(inc => { if (inc.projectId === p.id) { const val = inc.amount * inc.rate; inc.status === '已到账' ? pReceived += val : pReceivable += val; } });
-                dataStore.expense.forEach(exp => { if (exp.projectId === p.id) pCost += (exp.amount * exp.rate); });
+                dataStore.income.forEach(inc => { 
+                    if (inc.projectId === p.id) { 
+                        const val = inc.amount * inc.rate; 
+                        inc.status === '已到账' ? pReceived += val : pReceivable += val; 
+                    } 
+                });
+                dataStore.expense.forEach(exp => { 
+                    if (exp.projectId === p.id) pCost += (exp.amount * exp.rate); 
+                });
                 return { ...p, pReceived, pReceivable, pCost, actualGrossProfit: pReceived - pCost };
             }).sort((a, b) => b.actualGrossProfit - a.actualGrossProfit);
 
@@ -667,9 +660,8 @@ async function saveData() {
                 const gpColor = stat.actualGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
                 const cnyContractValue = (stat.contractAmount || 0) * (stat.exchangeRate || 1);
                 
-                let statusColor = stat.orderStatus === '已完成'
-    ? 'tag-status-done'
-    : 'tag-status-on';
+                let statusColor = 'tag-status-on'; 
+                if(stat.orderStatus === '已完成') statusColor = 'tag-admin'; 
                 
                 const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${stat.orderType}</span>` : '';
 
@@ -700,14 +692,15 @@ async function saveData() {
         }
 
         function renderOverview() {
-            function updateMonthlyDashboard() {
-    renderOverview();
-    renderTables();
-    renderLeaderboard();
-}
             let monthReceived = 0, monthReceivable = 0, projectCost = 0, adminExpense = 0;
-            dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { const val = item.amount * item.rate; item.status === '已到账' ? monthReceived += val : monthReceivable += val; });
-            dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { const val = item.amount * item.rate; item.projectId === 'ADMIN' ? adminExpense += val : projectCost += val; });
+            dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { 
+                const val = item.amount * item.rate; 
+                item.status === '已到账' ? monthReceived += val : monthReceivable += val; 
+            });
+            dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { 
+                const val = item.amount * item.rate; 
+                item.projectId === 'ADMIN' ? adminExpense += val : projectCost += val; 
+            });
 
             const totalIncome = monthReceived + monthReceivable;
             const netProfit = totalIncome - projectCost - adminExpense;
@@ -718,44 +711,81 @@ async function saveData() {
             document.getElementById('stat-income-total').innerText = `包含应收总计: ¥ ${formatMoney(totalIncome)}`;
             document.getElementById('stat-proj-cost').innerText = `¥ ${formatMoney(projectCost)}`;
             document.getElementById('stat-admin-exp').innerText = `¥ ${formatMoney(adminExpense)}`;
-            const adminRateEl = document.getElementById('stat-admin-rate'); adminRateEl.innerText = `${adminRate.toFixed(2)}%`; adminRateEl.style.color = adminRate > 15 ? 'var(--expense-color)' : 'var(--text-main)';
-            const netProfitEl = document.getElementById('stat-net-profit'); netProfitEl.innerText = `¥ ${formatMoney(netProfit)}`; netProfitEl.style.color = netProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            
+            const adminRateEl = document.getElementById('stat-admin-rate'); 
+            adminRateEl.innerText = `${adminRate.toFixed(2)}%`;
+            adminRateEl.style.color = adminRate > 15 ? 'var(--expense-color)' : 'var(--text-main)';
+            
+            const netProfitEl = document.getElementById('stat-net-profit'); 
+            netProfitEl.innerText = `¥ ${formatMoney(netProfit)}`;
+            netProfitEl.style.color = netProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            
             document.getElementById('stat-net-margin').innerText = `${netMargin.toFixed(2)}%`;
         }
 
         function getAmountHtml(item, isIncome) {
             const cnyTotal = item.amount * item.rate;
             const colorClass = isIncome ? 'text-profit' : 'text-expense';
-            return item.currency === 'CNY' ? `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span>` : `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span><span class="text-muted-sm">原币: ${item.amount} ${item.currency}</span>`;
+            return item.currency === 'CNY' ?
+                `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span>` : 
+                `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span><span class="text-muted-sm">原币: ${item.amount} ${item.currency}</span>`;
         }
 
         function renderTables() {
-            const incTbody = document.getElementById('table-income'); incTbody.innerHTML = '';
+            const incTbody = document.getElementById('table-income');
+            incTbody.innerHTML = '';
             const incData = dataStore.income.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
             if(incData.length === 0) incTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
             incData.forEach(item => {
                 const statusTag = item.status === '已到账' ? 'tag-status-on' : 'tag-status-off';
-                incTbody.innerHTML += `<tr><td>${item.date}</td><td style="font-weight:600;">${getProjectById(item.projectId).name}</td><td><span class="tag ${statusTag}">${item.status}</span></td><td>${getAmountHtml(item, true)}</td><td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td><td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button></td></tr>`;
+                incTbody.innerHTML += `<tr>
+                    <td>${item.date}</td>
+                    <td style="font-weight:600;">${getProjectById(item.projectId).name}</td>
+                    <td><span class="tag ${statusTag}">${item.status}</span></td>
+                    <td>${getAmountHtml(item, true)}</td>
+                    <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
+                    <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button></td>
+                </tr>`;
             });
 
-            const expTbody = document.getElementById('table-expense'); expTbody.innerHTML = '';
+            const expTbody = document.getElementById('table-expense');
+            expTbody.innerHTML = '';
             const expData = dataStore.expense.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
             if(expData.length === 0) expTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
             expData.forEach(item => {
-                const typeHtml = item.projectId === 'ADMIN' ? `<span class="tag tag-admin">管理费用</span>` : `<span class="tag tag-project" style="margin-bottom:4px;">项目成本</span><br><span style="font-size:0.75rem;">${getProjectById(item.projectId).name}</span>`;
-                expTbody.innerHTML += `<tr><td>${item.date}</td><td>${typeHtml}</td><td>${item.category}</td><td>${getAmountHtml(item, false)}</td><td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td><td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button></td></tr>`;
+                const typeHtml = item.projectId === 'ADMIN' ? 
+                    `<span class="tag tag-admin">管理费用</span>` : 
+                    `<span class="tag tag-project" style="margin-bottom:4px;">项目成本</span><br><span style="font-size:0.75rem;">${getProjectById(item.projectId).name}</span>`;
+                expTbody.innerHTML += `<tr>
+                    <td>${item.date}</td>
+                    <td>${typeHtml}</td>
+                    <td>${item.category}</td>
+                    <td>${getAmountHtml(item, false)}</td>
+                    <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
+                    <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button></td>
+                </tr>`;
             });
         }
 
         function renderAnnualDashboard() {
-            const year = document.getElementById('annual-year').value; if(!year) return;
+            const year = document.getElementById('annual-year').value;
+            if(!year) return;
+            
             let annTotalIncome = 0, annReceived = 0, annProjectCost = 0, annAdminCost = 0;
             const yearIncome = dataStore.income.filter(item => item.date.startsWith(year));
             const yearExpense = dataStore.expense.filter(item => item.date.startsWith(year));
-
-            yearIncome.forEach(item => { const val = item.amount * item.rate; annTotalIncome += val; if(item.status === '已到账') annReceived += val; });
-            yearExpense.forEach(item => { const val = item.amount * item.rate; if(item.projectId === 'ADMIN') annAdminCost += val; else annProjectCost += val; });
-
+            
+            yearIncome.forEach(item => { 
+                const val = item.amount * item.rate; 
+                annTotalIncome += val; 
+                if(item.status === '已到账') annReceived += val; 
+            });
+            yearExpense.forEach(item => { 
+                const val = item.amount * item.rate; 
+                if(item.projectId === 'ADMIN') annAdminCost += val; 
+                else annProjectCost += val; 
+            });
+            
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
 
@@ -764,27 +794,42 @@ async function saveData() {
             document.getElementById('ann-proj-cost').innerText = `¥ ${formatMoney(annProjectCost)}`;
             document.getElementById('ann-admin-cost').innerText = `¥ ${formatMoney(annAdminCost)}`;
             
-            const netProfitEl = document.getElementById('ann-net-profit'); netProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`; netProfitEl.style.color = annNetProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
-            document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`; document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            const netProfitEl = document.getElementById('ann-net-profit'); 
+            netProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`; 
+            netProfitEl.style.color = annNetProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+            
+            document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`; 
+            document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
 
-            const tbody = document.getElementById('table-annual-projects'); tbody.innerHTML = '';
+            const tbody = document.getElementById('table-annual-projects');
+            tbody.innerHTML = '';
             if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">本年度暂无项目数据</td></tr>`;
-
+            
             const projectStats = dataStore.projects.map(p => {
                 let pInc = 0, pCost = 0;
                 yearIncome.filter(i => i.projectId === p.id).forEach(i => pInc += i.amount * i.rate);
                 yearExpense.filter(e => e.projectId === p.id).forEach(e => pCost += e.amount * e.rate);
-                const pProfit = pInc - pCost; const pMargin = pInc > 0 ? (pProfit / pInc) * 100 : 0; const pShare = annTotalIncome > 0 ? (pInc / annTotalIncome) * 100 : 0;
+                const pProfit = pInc - pCost; 
+                const pMargin = pInc > 0 ? (pProfit / pInc) * 100 : 0; 
+                const pShare = annTotalIncome > 0 ? (pInc / annTotalIncome) * 100 : 0;
                 return { name: p.name, pInc, pCost, pProfit, pMargin, pShare };
             });
-
+            
             const activeProjects = projectStats.filter(stat => stat.pInc > 0 || stat.pCost > 0).sort((a,b) => b.pInc - a.pInc);
             if (activeProjects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">无流水数据</td></tr>`;
-
+            
             activeProjects.forEach((stat, index) => {
                 const profitColor = stat.pProfit < 0 ? 'var(--expense-color)' : 'var(--income-color)';
                 let rankHtml = index === 0 ? '<span class="rank-medal">🥇</span>' : index === 1 ? '<span class="rank-medal">🥈</span>' : index === 2 ? '<span class="rank-medal">🥉</span>' : `<span class="rank-num">${index + 1}</span>`;
-                tbody.innerHTML += `<tr><td style="text-align:center;">${rankHtml}</td><td style="font-weight:600; font-size:0.9rem;">${stat.name}</td><td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pInc)}</td><td style="color:var(--text-muted);">${stat.pShare.toFixed(2)}%</td><td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td><td style="font-weight:700; color:${profitColor};">¥ ${formatMoney(stat.pProfit)}</td><td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td style="text-align:center;">${rankHtml}</td>
+                    <td style="font-weight:600; font-size:0.9rem;">${stat.name}</td>
+                    <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pInc)}</td>
+                    <td style="color:var(--text-muted);">${stat.pShare.toFixed(2)}%</td>
+                    <td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
+                    <td style="font-weight:700; color:${profitColor};">¥ ${formatMoney(stat.pProfit)}</td>
+                    <td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td>
+                </tr>`;
             });
         }
 
@@ -804,7 +849,10 @@ async function saveData() {
                 startDate: document.getElementById('prj-date').value
             });
             await saveData();
-            this.reset(); document.getElementById('prj-date').value = todayStr; document.getElementById('prj-currency').value = 'CNY'; toggleProjectCurrencyRate();
+            this.reset(); 
+            document.getElementById('prj-date').value = todayStr; 
+            document.getElementById('prj-currency').value = 'CNY'; 
+            toggleProjectCurrencyRate();
         });
 
         document.getElementById('form-income').addEventListener('submit', async function(e) {
@@ -812,28 +860,45 @@ async function saveData() {
             if(!document.getElementById('inc-project').value) return alert('请选择项目！');
             dataStore.income.push({
                 id: 'INC_' + Date.now(),
-                date: document.getElementById('inc-date').value, projectId: document.getElementById('inc-project').value,
-                currency: document.getElementById('inc-currency').value, amount: parseFloat(document.getElementById('inc-amount').value),
-                rate: parseFloat(document.getElementById('inc-rate').value), status: document.getElementById('inc-status').value, remark: document.getElementById('inc-remark').value
+                date: document.getElementById('inc-date').value, 
+                projectId: document.getElementById('inc-project').value,
+                currency: document.getElementById('inc-currency').value, 
+                amount: parseFloat(document.getElementById('inc-amount').value),
+                rate: parseFloat(document.getElementById('inc-rate').value), 
+                status: document.getElementById('inc-status').value, 
+                remark: document.getElementById('inc-remark').value
             });
             await saveData();
-            document.getElementById('inc-amount').value = ''; document.getElementById('inc-remark').value = ''; document.getElementById('inc-currency').value = 'CNY'; toggleCurrencyRate('inc');
+            document.getElementById('inc-amount').value = ''; 
+            document.getElementById('inc-remark').value = ''; 
+            document.getElementById('inc-currency').value = 'CNY';
+            toggleCurrencyRate('inc');
         });
 
         document.getElementById('form-expense').addEventListener('submit', async function(e) {
             e.preventDefault();
             dataStore.expense.push({
                 id: 'EXP_' + Date.now(),
-                date: document.getElementById('exp-date').value, projectId: document.getElementById('exp-project-select').value,
-                category: document.getElementById('exp-category').value, currency: document.getElementById('exp-currency').value,
-                amount: parseFloat(document.getElementById('exp-amount').value), rate: parseFloat(document.getElementById('exp-rate').value), remark: document.getElementById('exp-remark').value
+                date: document.getElementById('exp-date').value, 
+                projectId: document.getElementById('exp-project-select').value,
+                category: document.getElementById('exp-category').value, 
+                currency: document.getElementById('exp-currency').value,
+                amount: parseFloat(document.getElementById('exp-amount').value), 
+                rate: parseFloat(document.getElementById('exp-rate').value), 
+                remark: document.getElementById('exp-remark').value
             });
             await saveData();
-            document.getElementById('exp-amount').value = ''; document.getElementById('exp-remark').value = ''; document.getElementById('exp-currency').value = 'CNY'; toggleCurrencyRate('exp');
+            document.getElementById('exp-amount').value = ''; 
+            document.getElementById('exp-remark').value = ''; 
+            document.getElementById('exp-currency').value = 'CNY'; 
+            toggleCurrencyRate('exp');
         });
 
         async function deleteRecord(type, id) {
-            if (confirm('确定从云端彻底删除此流水吗？')) { dataStore[type] = dataStore[type].filter(item => item.id !== id); await saveData(); }
+            if (confirm('确定从云端彻底删除此流水吗？')) { 
+                dataStore[type] = dataStore[type].filter(item => item.id !== id);
+                await saveData(); 
+            }
         }
 
         function exportExcel() {
@@ -841,37 +906,80 @@ async function saveData() {
             if (!currentMonth) return alert('请先选择要导出的月份！');
             let csvContent = "\uFEFF流水类型,发生日期,资金状态/科目,归属项目/类型,原币币种,原币金额,手工汇率,折合人民币(CNY),备注\n";
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(inc => {
-                const pName = getProjectById(inc.projectId).name; const cnyVal = (inc.amount * inc.rate).toFixed(2); const remark = (inc.remark || '').replace(/,/g, '，'); 
+                const pName = getProjectById(inc.projectId).name; 
+                const cnyVal = (inc.amount * inc.rate).toFixed(2); 
+                const remark = (inc.remark || '').replace(/,/g, '，'); 
                 csvContent += `收入,${inc.date},${inc.status},${pName},${inc.currency},${inc.amount},${inc.rate},${cnyVal},${remark}\n`;
             });
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(exp => {
-                const pName = exp.projectId === 'ADMIN' ? '公司公摊管理费' : getProjectById(exp.projectId).name; const cnyVal = (exp.amount * exp.rate).toFixed(2); const remark = (exp.remark || '').replace(/,/g, '，');
+                const pName = exp.projectId === 'ADMIN' ? '公司公摊管理费' : getProjectById(exp.projectId).name; 
+                const cnyVal = (exp.amount * exp.rate).toFixed(2); 
+                const remark = (exp.remark || '').replace(/,/g, '，');
                 csvContent += `支出,${exp.date},${exp.category},${pName},${exp.currency},${exp.amount},${exp.rate},${cnyVal},${remark}\n`;
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `云端财务流水_${currentMonth}.csv`; link.click();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); 
+            const link = document.createElement("a"); 
+            link.href = URL.createObjectURL(blob); 
+            link.download = `云端财务流水_${currentMonth}.csv`; 
+            link.click();
         }
 
         function exportBackupData() {
             const payload = { version: "v2", exportDate: new Date().toISOString(), data: dataStore };
-            const jsonStr = JSON.stringify(payload, null, 2); const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
-            const d = new Date(); const filename = `云端财务备份_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename; link.click();
+            const jsonStr = JSON.stringify(payload, null, 2); 
+            const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+            const d = new Date();
+            const filename = `云端财务备份_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
+            const link = document.createElement("a"); 
+            link.href = URL.createObjectURL(blob); 
+            link.download = filename; 
+            link.click();
         }
 
         function importBackupData(event) {
-            const file = event.target.files[0]; if (!file) return;
+            const file = event.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
+
             reader.onload = async function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (!parsed.version || !parsed.data) return alert("导入失败：文件格式不正确");
+                    if (!parsed.version || !parsed.data) {
+                        return alert("导入失败：文件格式不正确");
+                    }
+
                     if (confirm("⚠️ 注意：这将完全覆盖服务器云端现有的所有数据！\n确定继续？")) {
-                        dataStore.projects = parsed.data.projects ||[];
-                        dataStore.income = parsed.data.income ||[];
-                        dataStore.expense = parsed.data.expense ||
+                        // 覆盖数据
+                        dataStore.projects = parsed.data.projects || [];
+                        dataStore.income = parsed.data.income || [];
+                        dataStore.expense = parsed.data.expense || [];
+                        // 保存到服务器
+                        await saveData();
+                        // 重新渲染所有界面
+                        updateMonthlyDashboard();
+                        renderAnnualDashboard();
 
+                        alert("✅ 数据恢复成功！");
+                    }
 
+                } catch (error) {
+                    console.error("导入失败:", error);
+                    alert("❌ 导入失败：文件损坏或格式错误");
+                }
+            };
 
+            reader.readAsText(file);
+            // 重置 input，防止重复导入同一个文件无效
+            event.target.value = "";
+        }
 
-
-
+        // ================= 补充缺失的核心指挥函数 =================
+        function updateMonthlyDashboard() {
+            if (typeof renderProjectDropdowns === 'function') renderProjectDropdowns();
+            if (typeof renderLeaderboard === 'function') renderLeaderboard();
+            if (typeof renderOverview === 'function') renderOverview();
+            if (typeof renderTables === 'function') renderTables();
+        }
+    </script>
+</body>
+</html>
