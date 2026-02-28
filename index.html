@@ -944,6 +944,27 @@
                 id: 'EXP_' + Date.now(),
                 date: document.getElementById('exp-date').value, 
                 projectId: document.getElementById('exp-project-select').value,
+                status: document.getElementById('exp-status').value, 
+                supplier: document.getElementById('exp-supplier').value, // 新增：保存供应商
+                category: document.getElementById('exp-category').value, 
+                currency: document.getElementById('exp-currency').value,
+                amount: parseFloat(document.getElementById('exp-amount').value), 
+                rate: parseFloat(document.getElementById('exp-rate').value), 
+                remark: document.getElementById('exp-remark').value
+            });
+            await saveData();
+            document.getElementById('exp-amount').value = ''; 
+            document.getElementById('exp-remark').value = ''; 
+            document.getElementById('exp-supplier').value = ''; // 新增：提交完清空供应商
+            document.getElementById('exp-currency').value = 'CNY'; 
+            document.getElementById('exp-status').value = '已支付'; 
+            toggleCurrencyRate('exp');
+        }); async function(e) {
+            e.preventDefault();
+            dataStore.expense.push({
+                id: 'EXP_' + Date.now(),
+                date: document.getElementById('exp-date').value, 
+                projectId: document.getElementById('exp-project-select').value,
                 status: document.getElementById('exp-status').value, // 👈【新增代码】插入在 projectId 的后面，category 的前面
                 category: document.getElementById('exp-category').value, 
                 currency: document.getElementById('exp-currency').value,
@@ -1048,6 +1069,7 @@
     </script>
 </body>
 </html>
+
 
 
 
