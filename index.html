@@ -1123,10 +1123,12 @@ function toggleSupplier(trClass, iconElement) {
             if (typeof renderLeaderboard === 'function') renderLeaderboard();
             if (typeof renderOverview === 'function') renderOverview();
             if (typeof renderTables === 'function') renderTables();
+            if (typeof renderClientDashboard === 'function' && document.getElementById('page-client').classList.contains('active')) renderClientDashboard();
         }
     </script>
 </body>
 </html>
+
 
 
 
