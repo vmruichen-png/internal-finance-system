@@ -445,14 +445,16 @@
                     <div class="table-wrapper" style="max-height: 500px;">
                         <table>
                             <thead>
-                                <tr>
-                                    <th width="8%">明细</th>
-                                    <th width="25%">客户公司名称</th>
-                                    <th width="20%">总收入(原币)</th>
-                                    <th width="20%">总支出(原币)</th>
-                                    <th width="27%">总利润(原币)</th>
-                                </tr>
-                            </thead>
+    <tr>
+        <th width="5%">明细</th>
+        <th width="20%">客户公司名称</th>
+        <th width="12%">USD收入</th>
+        <th width="12%">CNY收入</th>
+        <th width="17%">总收入(折合CNY)</th>
+        <th width="17%">总支出(CNY)</th>
+        <th width="17%">利润(CNY)</th>
+    </tr>
+</thead>
                             <tbody id="table-client-company"></tbody>
                         </table>
                     </div>
@@ -1330,6 +1332,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
