@@ -700,6 +700,11 @@ async function saveData() {
         }
 
         function renderOverview() {
+            function updateMonthlyDashboard() {
+    renderOverview();
+    renderTables();
+    renderLeaderboard();
+}
             let monthReceived = 0, monthReceivable = 0, projectCost = 0, adminExpense = 0;
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { const val = item.amount * item.rate; item.status === '已到账' ? monthReceived += val : monthReceivable += val; });
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { const val = item.amount * item.rate; item.projectId === 'ADMIN' ? adminExpense += val : projectCost += val; });
@@ -864,6 +869,7 @@ async function saveData() {
                         dataStore.projects = parsed.data.projects ||[];
                         dataStore.income = parsed.data.income ||[];
                         dataStore.expense = parsed.data.expense ||
+
 
 
 
