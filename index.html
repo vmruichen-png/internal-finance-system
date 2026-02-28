@@ -952,7 +952,20 @@
                 });
             }
         }
-
+function toggleSupplier(trClass, iconElement) {
+            const rows = document.querySelectorAll(`.${trClass}`);
+            let isExpanded = false;
+            rows.forEach(row => {
+                if (row.classList.contains('show')) {
+                    row.classList.remove('show');
+                } else {
+                    row.classList.add('show');
+                    isExpanded = true;
+                }
+            });
+            iconElement.innerText = isExpanded ? '▼' : '▶';
+        }
+        
         // ================= 表单提交与云端操作 =================
         document.getElementById('form-project').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -1126,6 +1139,7 @@
     </script>
 </body>
 </html>
+
 
 
 
