@@ -660,8 +660,9 @@
                 const gpColor = stat.actualGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
                 const cnyContractValue = (stat.contractAmount || 0) * (stat.exchangeRate || 1);
                 
-                let statusColor = 'tag-status-on'; 
-                if(stat.orderStatus === '已完成') statusColor = 'tag-admin'; 
+                let statusColor = stat.orderStatus === '已完成'
+    ? 'tag-status-done'
+    : 'tag-status-on';
                 
                 const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${stat.orderType}</span>` : '';
 
@@ -856,4 +857,5 @@
                         dataStore.projects = parsed.data.projects ||[];
                         dataStore.income = parsed.data.income ||[];
                         dataStore.expense = parsed.data.expense ||
+
 
