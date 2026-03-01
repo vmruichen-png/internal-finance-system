@@ -176,14 +176,18 @@
 
     <div id="page-monthly" class="page active">
         <div class="container">
+            <!-- ================= 替换：修改此处 ================= -->
             <div class="header">
                 <h1>📅 月度财务工作台</h1>
                 <div class="controls-wrapper">
                     <div class="filter-wrapper">
                         <label for="global-month">数据月份：</label>
                         <input type="month" id="global-month" class="filter-input">
+                        <!-- 【新增】下面这行“显示全部历史明细”按钮代码 -->
+                        <button type="button" class="btn-action" style="background-color: var(--text-muted); padding: 6px 12px; font-size: 0.85rem;" onclick="clearMonthFilter()">显示全部历史明细</button>
                     </div>
-                    <button class="btn-action" onclick="exportExcel()">⬇️ 导出本月明细</button>
+                    <!-- 【修改】文案改为“当前明细” -->
+                    <button class="btn-action" onclick="exportExcel()">⬇️ 导出当前明细</button>
                 </div>
             </div>
 
@@ -1358,6 +1362,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
