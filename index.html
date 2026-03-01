@@ -494,6 +494,30 @@
                 </div>
             </div>
             <!-- ================= 【新增结束】 ================= -->
+            <!-- ================= 【新增模块】管理费趋势图表 ================= -->
+            <div class="card" style="margin-top: 20px;">
+                <h2 class="section-title">📊 管理费用趋势与结构可视化</h2>
+                <div class="chart-grid">
+                    <!-- 左侧：每月柱状图 -->
+                    <div>
+                        <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px; text-align: center;">📅 每月管理费支出走势</h3>
+                        <div id="chart-monthly-admin" class="bar-chart-container">
+                            <!-- JS 将在这里生成柱子 -->
+                        </div>
+                    </div>
+
+                    <!-- 右侧：成本结构饼图 -->
+                    <div>
+                        <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px; text-align: center;">🍰 费用科目占比结构</h3>
+                        <div class="pie-layout">
+                            <div id="chart-category-pie" class="pie-chart"></div>
+                            <div id="chart-category-legend" class="pie-legend">
+                                <!-- JS 将在这里生成图例 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- ================= 【新增代码】单项目总览页面 ================= -->
@@ -1733,6 +1757,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
