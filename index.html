@@ -969,23 +969,48 @@
             if(!year) return;
             
             let annTotalIncome = 0, annReceived = 0, annProjectCost = 0, annAdminCost = 0;
+            // 预备管理费分组对象
+            const adminMap = {}; 
+            
             const yearIncome = dataStore.income.filter(item => item.date.startsWith(year));
             const yearExpense = dataStore.expense.filter(item => item.date.startsWith(year));
             
+            // 1. 统计收入
             yearIncome.forEach(item => { 
                 const val = item.amount * item.rate; 
                 annTotalIncome += val; 
                 if(item.status === '已到账') annReceived += val; 
             });
+
+            // 2. 统计支出 (区分项目成本 和 管理费)
             yearExpense.forEach(item => { 
                 const val = item.amount * item.rate; 
-                if(item.projectId === 'ADMIN') annAdminCost += val; 
-                else annProjectCost += val; 
+                
+                if(item.projectId === 'ADMIN') {
+                    // --- 管理费统计逻辑 ---
+                    annAdminCost += val; 
+                    // 按科目分组
+                    if(!adminMap[item.category]) {
+                        adminMap[item.category] = { total: 0, count: 0, items: [] };
+                    }
+                    adminMap[item.category].total += val;
+                    adminMap[item.category].count += 1;
+                    adminMap[item.category].items.push({
+                        date: item.date,
+                        val: val,
+                        remark: item.remark
+                    });
+                } else {
+                    // --- 项目成本逻辑 ---
+                    annProjectCost += val; 
+                }
             });
             
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
+            const projectGrossProfit = annTotalIncome - annProjectCost; // 项目总毛利
 
+            // 渲染顶部统计卡片
             document.getElementById('ann-income-total').innerText = `¥ ${formatMoney(annTotalIncome)}`;
             document.getElementById('ann-income-received').innerText = `¥ ${formatMoney(annReceived)}`;
             document.getElementById('ann-proj-cost').innerText = `¥ ${formatMoney(annProjectCost)}`;
@@ -998,6 +1023,63 @@
             document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`; 
             document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
 
+            // ================= 【新增逻辑】渲染管理费对比概览 =================
+            const summaryProjProfitEl = document.getElementById('summary-proj-profit');
+            const summaryAdminCostEl = document.getElementById('summary-admin-cost');
+            const summaryNetProfitEl = document.getElementById('summary-net-profit');
+            
+            if(summaryProjProfitEl) {
+                summaryProjProfitEl.innerText = `¥ ${formatMoney(projectGrossProfit)}`;
+                summaryProjProfitEl.style.color = projectGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+                summaryAdminCostEl.innerText = `¥ ${formatMoney(annAdminCost)}`;
+                summaryNetProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`;
+                summaryNetProfitEl.style.color = annNetProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+            }
+
+            // ================= 【新增逻辑】渲染管理费详细表格 =================
+            const adminTbody = document.getElementById('table-annual-admin');
+            if(adminTbody) {
+                adminTbody.innerHTML = '';
+                const adminArr = Object.entries(adminMap).sort((a,b) => b[1].total - a[1].total);
+                
+                if (adminArr.length === 0) {
+                    adminTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无管理费支出</td></tr>`;
+                } else {
+                    adminArr.forEach(([cat, data], idx) => {
+                        const ratio = annAdminCost > 0 ? (data.total / annAdminCost) * 100 : 0;
+                        const trId = `admin-cat-${idx}`;
+                        
+                        // 主行
+                        adminTbody.innerHTML += `
+                            <tr style="font-weight: 600;">
+                                <td style="text-align: center;"><span class="toggle-icon" onclick="toggleSupplier('${trId}', this)">▶</span></td>
+                                <td>${cat}</td>
+                                <td style="color: var(--admin-color);">¥ ${formatMoney(data.total)}</td>
+                                <td>${ratio.toFixed(1)}%</td>
+                                <td>${data.count} 笔</td>
+                                <td>
+                                    <div style="background:#e5e7eb; height:6px; border-radius:3px; width:100%;">
+                                        <div style="background:var(--admin-color); height:100%; border-radius:3px; width:${ratio}%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        // 明细折叠行
+                        data.items.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(detail => {
+                            adminTbody.innerHTML += `
+                                <tr class="sub-row ${trId}">
+                                    <td></td>
+                                    <td style="color: var(--text-muted); font-size: 0.8rem; padding-left: 20px;">📅 ${detail.date}</td>
+                                    <td style="color: var(--text-muted); font-size: 0.8rem;">¥ ${formatMoney(detail.val)}</td>
+                                    <td colspan="3" style="color: var(--text-muted); font-size: 0.8rem;">${detail.remark || '-'}</td>
+                                </tr>
+                            `;
+                        });
+                    });
+                }
+            }
+
+            // ================= 原有逻辑：渲染项目排行 =================
             const tbody = document.getElementById('table-annual-projects');
             tbody.innerHTML = '';
             if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">本年度暂无项目数据</td></tr>`;
@@ -1013,22 +1095,24 @@
             });
             
             const activeProjects = projectStats.filter(stat => stat.pInc > 0 || stat.pCost > 0).sort((a,b) => b.pInc - a.pInc);
-            if (activeProjects.length === 0) return tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">无流水数据</td></tr>`;
-            
-            activeProjects.forEach((stat, index) => {
-                const profitColor = stat.pProfit < 0 ? 'var(--expense-color)' : 'var(--income-color)';
-                let rankHtml = index === 0 ? '<span class="rank-medal">🥇</span>' : index === 1 ? '<span class="rank-medal">🥈</span>' : index === 2 ? '<span class="rank-medal">🥉</span>' : `<span class="rank-num">${index + 1}</span>`;
-                tbody.innerHTML += `<tr>
-                    <td style="text-align:center;">${rankHtml}</td>
-                    <td style="font-weight:600; font-size:0.9rem;">${stat.name}</td>
-                    <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pInc)}</td>
-                    <td style="color:var(--text-muted);">${stat.pShare.toFixed(2)}%</td>
-                    <td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
-                    <td style="font-weight:700; color:${profitColor};">¥ ${formatMoney(stat.pProfit)}</td>
-                    <td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td>
-                </tr>`;
-            });
-            // 供应商数据统计逻辑
+            if (activeProjects.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#999;">无流水数据</td></tr>`;
+            else {
+                activeProjects.forEach((stat, index) => {
+                    const profitColor = stat.pProfit < 0 ? 'var(--expense-color)' : 'var(--income-color)';
+                    let rankHtml = index === 0 ? '<span class="rank-medal">🥇</span>' : index === 1 ? '<span class="rank-medal">🥈</span>' : index === 2 ? '<span class="rank-medal">🥉</span>' : `<span class="rank-num">${index + 1}</span>`;
+                    tbody.innerHTML += `<tr>
+                        <td style="text-align:center;">${rankHtml}</td>
+                        <td style="font-weight:600; font-size:0.9rem;">${stat.name}</td>
+                        <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pInc)}</td>
+                        <td style="color:var(--text-muted);">${stat.pShare.toFixed(2)}%</td>
+                        <td style="color:var(--project-color);">¥ ${formatMoney(stat.pCost)}</td>
+                        <td style="font-weight:700; color:${profitColor};">¥ ${formatMoney(stat.pProfit)}</td>
+                        <td style="color:${profitColor};">${stat.pMargin.toFixed(2)}%</td>
+                    </tr>`;
+                });
+            }
+
+            // ================= 原有逻辑：渲染供应商 =================
             const supplierMap = {};
             yearExpense.forEach(e => {
                 const supp = e.supplier || '未登记供应商';
@@ -1043,7 +1127,7 @@
                 else { supplierMap[supp].payable += val; }
                 
                 // 记录项目维度的明细
-                const pName = e.projectId === 'ADMIN' ? '公司公摊管理费' : (getProjectById(e.projectId).name || '未知项目');
+                const pName = e.projectId === 'ADMIN' ? '🏢 公司公摊管理费' : (getProjectById(e.projectId).name || '未知项目');
                 if (!supplierMap[supp].projects[pName]) {
                     supplierMap[supp].projects[pName] = { paid: 0, payable: 0 };
                 }
@@ -1621,6 +1705,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
