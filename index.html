@@ -438,6 +438,23 @@
             </div>
         </div>
     </div>
+    <!-- ================= 【新增代码】单项目总览页面 ================= -->
+    <div id="page-project-overview" class="page">
+        <div class="container">
+            <div class="header">
+                <h1>📁 单项目全景分析总览</h1>
+                <div class="controls-wrapper">
+                    <div class="filter-wrapper">
+                        <label for="overview-project-select">选择分析项目：</label>
+                        <!-- 选择项目时触发渲染 -->
+                        <select id="overview-project-select" class="filter-input" style="width: 250px;" onchange="renderProjectOverview()"></select>
+                    </div>
+                </div>
+            </div>
+            <!-- 动态渲染数据区 -->
+            <div id="overview-content"></div>
+        </div>
+    </div>
     <div id="page-client" class="page">
         <div class="container">
             
@@ -1375,6 +1392,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
