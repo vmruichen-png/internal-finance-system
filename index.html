@@ -1022,7 +1022,8 @@
             
             let annTotalIncome = 0, annReceived = 0, annProjectCost = 0, annAdminCost = 0;
             const adminMap = {}; // 用于管理费科目分组
-            const adminMonthly = new Array(12).fill(0); // 【新增】用于12个月柱状图
+            // 【关键修改】初始化12个月的数组
+            const adminMonthly = new Array(12).fill(0); 
             
             const yearIncome = dataStore.income.filter(item => item.date.startsWith(year));
             const yearExpense = dataStore.expense.filter(item => item.date.startsWith(year));
@@ -1042,7 +1043,7 @@
                     // --- 管理费逻辑 ---
                     annAdminCost += val; 
                     
-                    // A. 按科目分组 (用于饼图和表格)
+                    // A. 按科目分组
                     if(!adminMap[item.category]) {
                         adminMap[item.category] = { total: 0, count: 0, items: [] };
                     }
@@ -1050,14 +1051,21 @@
                     adminMap[item.category].count += 1;
                     adminMap[item.category].items.push({ date: item.date, val: val, remark: item.remark });
 
-                    // B. 【新增】按月份分组 (用于柱状图)
-                    // 假设日期格式是 yyyy-mm-dd
-                    const parts = item.date.split('-'); 
-                    if(parts.length > 1) {
-                        const monthIdx = parseInt(parts[1]) - 1; // 0-11
-                        if(monthIdx >= 0 && monthIdx <= 11) {
-                            adminMonthly[monthIdx] += val;
+                    // B. 【关键修改】更强壮的日期解析逻辑
+                    // 无论日期是 "2023-05-01" 还是 "2023/05/01" 都能识别
+                    let monthIdx = -1;
+                    if(item.date && item.date.length >= 7) {
+                        // 使用正则表达式同时分割 - 或 /
+                        const parts = item.date.split(/[-/]/); 
+                        if(parts.length >= 2) {
+                            // parts[1] 是月份 (01-12)，减1转为数组下标 (0-11)
+                            monthIdx = parseInt(parts[1]) - 1;
                         }
+                    }
+                    
+                    // 如果解析成功，累加到对应月份
+                    if(monthIdx >= 0 && monthIdx <= 11) {
+                        adminMonthly[monthIdx] += val;
                     }
 
                 } else {
@@ -1083,7 +1091,7 @@
             document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`; 
             document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
 
-            // --- 渲染管理费概览 (如果上一步你加了summary标签的话) ---
+            // --- 渲染管理费概览 ---
             const summaryProjProfitEl = document.getElementById('summary-proj-profit');
             if(summaryProjProfitEl) {
                 summaryProjProfitEl.innerText = `¥ ${formatMoney(projectGrossProfit)}`;
@@ -1123,19 +1131,17 @@
                 }
             }
 
-            // ================= 【新增图表逻辑】 =================
-            
-            // 1. 柱状图 (Chart Bar)
+            // ================= 1. 柱状图 (修复后) =================
             const chartBarEl = document.getElementById('chart-monthly-admin');
             if(chartBarEl) {
                 chartBarEl.innerHTML = '';
-                // 找出最大值用于计算百分比高度，避免除以0
+                // 找出最大值，确保除数不为0
                 const maxVal = Math.max(...adminMonthly, 1); 
                 
                 adminMonthly.forEach((val, idx) => {
                     // 计算高度百分比
                     let heightPct = (val / maxVal) * 100;
-                    // 如果有值但很小，给一个最小高度以便能看见
+                    // 【视觉优化】如果有值但太小(小于2%)，强制显示为2%，否则看不见
                     if(val > 0 && heightPct < 2) heightPct = 2;
                     
                     chartBarEl.innerHTML += `
@@ -1149,14 +1155,12 @@
                 });
             }
 
-            // 2. 饼图 (Pie Chart)
+            // ================= 2. 饼图 (保持不变) =================
             const chartPieEl = document.getElementById('chart-category-pie');
             const chartLegendEl = document.getElementById('chart-category-legend');
             
             if(chartPieEl && chartLegendEl && annAdminCost > 0) {
-                // 定义颜色盘
                 const colors = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#6b7280'];
-                
                 let gradientStr = [];
                 let currentPct = 0;
                 let legendHtml = '';
@@ -1164,28 +1168,19 @@
                 adminArr.forEach(([cat, data], idx) => {
                     const pct = (data.total / annAdminCost) * 100;
                     const color = colors[idx % colors.length];
-                    
-                    // CSS conic-gradient 语法: color start% end%
                     gradientStr.push(`${color} ${currentPct}% ${currentPct + pct}%`);
                     currentPct += pct;
-
-                    legendHtml += `
-                        <div class="legend-item">
-                            <div><span class="legend-dot" style="background:${color}"></span>${cat}</div>
-                            <div style="font-weight:600;">${pct.toFixed(1)}%</div>
-                        </div>
-                    `;
+                    legendHtml += `<div class="legend-item"><div><span class="legend-dot" style="background:${color}"></span>${cat}</div><div style="font-weight:600;">${pct.toFixed(1)}%</div></div>`;
                 });
 
                 chartPieEl.style.background = `conic-gradient(${gradientStr.join(', ')})`;
                 chartLegendEl.innerHTML = legendHtml;
             } else if (chartPieEl) {
-                // 如果没有数据，显示灰色
                 chartPieEl.style.background = '#e5e7eb';
                 chartLegendEl.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">暂无数据</div>';
             }
 
-            // ================= 原有逻辑：项目排行与供应商 (保持不变) =================
+            // ================= 项目排行 (保持不变) =================
             const projTbody = document.getElementById('table-annual-projects');
             projTbody.innerHTML = '';
             
@@ -1209,25 +1204,19 @@
                 });
             }
 
-            // ================= 供应商表格渲染逻辑 (已修改：排除管理费) =================
+            // ================= 供应商表格 (已包含之前的修改：排除管理费) =================
             const supplierMap = {};
             yearExpense.forEach(e => {
-                // 【新增代码】如果是管理费 (ADMIN)，直接跳过，不计入供应商排行
+                // 【保持之前的修改】排除管理费
                 if (e.projectId === 'ADMIN') return;
 
                 const supp = e.supplier || '未登记供应商';
                 if (!supplierMap[supp]) { supplierMap[supp] = { name: supp, total: 0, paid: 0, payable: 0, projects: {} }; }
-                
                 const val = e.amount * e.rate;
                 const isPaid = (e.status || '已支付') === '已支付';
-                
                 supplierMap[supp].total += val;
                 if (isPaid) { supplierMap[supp].paid += val; } else { supplierMap[supp].payable += val; }
-                
-                // 记录项目维度的明细
-                // 因为已经排除了 ADMIN，这里肯定都是具体的项目
                 const pName = getProjectById(e.projectId).name || '未知项目';
-                
                 if (!supplierMap[supp].projects[pName]) { supplierMap[supp].projects[pName] = { paid: 0, payable: 0 }; }
                 if (isPaid) { supplierMap[supp].projects[pName].paid += val; } else { supplierMap[supp].projects[pName].payable += val; }
             });
@@ -1236,9 +1225,8 @@
             suppTbody.innerHTML = '';
             const supplierArr = Object.values(supplierMap).sort((a, b) => b.payable - a.payable);
             
-            if (supplierArr.length === 0) { 
-                suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据 (已排除管理费)</td></tr>`; 
-            } else {
+            if (supplierArr.length === 0) { suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据 (已排除管理费)</td></tr>`; } 
+            else {
                 supplierArr.forEach((s, idx) => {
                     const payableRatio = s.total > 0 ? (s.payable / s.total) * 100 : 0;
                     const trId = `supp-${idx}`;
@@ -1784,6 +1772,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
