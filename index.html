@@ -1209,15 +1209,25 @@
                 });
             }
 
+            // ================= 供应商表格渲染逻辑 (已修改：排除管理费) =================
             const supplierMap = {};
             yearExpense.forEach(e => {
+                // 【新增代码】如果是管理费 (ADMIN)，直接跳过，不计入供应商排行
+                if (e.projectId === 'ADMIN') return;
+
                 const supp = e.supplier || '未登记供应商';
                 if (!supplierMap[supp]) { supplierMap[supp] = { name: supp, total: 0, paid: 0, payable: 0, projects: {} }; }
+                
                 const val = e.amount * e.rate;
                 const isPaid = (e.status || '已支付') === '已支付';
+                
                 supplierMap[supp].total += val;
                 if (isPaid) { supplierMap[supp].paid += val; } else { supplierMap[supp].payable += val; }
-                const pName = e.projectId === 'ADMIN' ? '🏢 公司公摊管理费' : (getProjectById(e.projectId).name || '未知项目');
+                
+                // 记录项目维度的明细
+                // 因为已经排除了 ADMIN，这里肯定都是具体的项目
+                const pName = getProjectById(e.projectId).name || '未知项目';
+                
                 if (!supplierMap[supp].projects[pName]) { supplierMap[supp].projects[pName] = { paid: 0, payable: 0 }; }
                 if (isPaid) { supplierMap[supp].projects[pName].paid += val; } else { supplierMap[supp].projects[pName].payable += val; }
             });
@@ -1226,8 +1236,9 @@
             suppTbody.innerHTML = '';
             const supplierArr = Object.values(supplierMap).sort((a, b) => b.payable - a.payable);
             
-            if (supplierArr.length === 0) { suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据</td></tr>`; } 
-            else {
+            if (supplierArr.length === 0) { 
+                suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据 (已排除管理费)</td></tr>`; 
+            } else {
                 supplierArr.forEach((s, idx) => {
                     const payableRatio = s.total > 0 ? (s.payable / s.total) * 100 : 0;
                     const trId = `supp-${idx}`;
@@ -1773,6 +1784,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
