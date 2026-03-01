@@ -1391,10 +1391,13 @@ function toggleSupplier(trClass, iconElement) {
             if (typeof renderOverview === 'function') renderOverview();
             if (typeof renderTables === 'function') renderTables();
             if (typeof renderClientDashboard === 'function' && document.getElementById('page-client').classList.contains('active')) renderClientDashboard();
+            // 【新增代码】如果停留在项目总览页，全局数据变化时自动刷新
+            if (typeof renderProjectOverview === 'function' && document.getElementById('page-project-overview').classList.contains('active')) renderProjectOverview();
         }
     </script>
 </body>
 </html>
+
 
 
 
