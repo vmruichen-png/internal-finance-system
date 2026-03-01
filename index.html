@@ -436,6 +436,36 @@
                     </table>
                 </div>
             </div>
+            <!-- ================= 【新增模块】年度管理费用分析 ================= -->
+            <div class="card" style="margin-top: 20px; border-left: 4px solid var(--admin-color);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <h2 class="section-title" style="border:none; margin:0;">📉 年度公司固定支出/管理费分析</h2>
+                    <div style="text-align:right; font-size: 0.9rem;">
+                        <span style="color:var(--text-muted);">项目总毛利: </span><span id="summary-proj-profit" style="font-weight:bold;">¥0.00</span>
+                        <span style="margin:0 8px; color:#ccc;">-</span>
+                        <span style="color:var(--text-muted);">管理费: </span><span id="summary-admin-cost" style="color:var(--admin-color); font-weight:bold;">¥0.00</span>
+                        <span style="margin:0 8px; color:#ccc;">=</span>
+                        <span style="color:var(--text-muted);">净利润: </span><span id="summary-net-profit" style="font-weight:bold;">¥0.00</span>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper" style="max-height: 500px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="5%">明细</th>
+                                <th width="20%">费用科目 (Category)</th>
+                                <th width="20%">年度总支出</th>
+                                <th width="15%">占管理费比例</th>
+                                <th width="15%">笔数</th>
+                                <th width="25%">进度条</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-annual-admin"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- ================= 【新增结束】 ================= -->
         </div>
     </div>
     <!-- ================= 【新增代码】单项目总览页面 ================= -->
@@ -1591,6 +1621,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
