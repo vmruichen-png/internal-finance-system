@@ -1036,6 +1036,7 @@
             });
 
             // ================= 开头：从这里开始 =================
+            // ================= 开头 1：从这里开始替换 =================
             // 2. 统计支出
             yearExpense.forEach(item => { 
                 const val = item.amount * item.rate;
@@ -1050,13 +1051,14 @@
                     adminMap[item.category].count += 1;
                     adminMap[item.category].items.push({ date: item.date, val: val, remark: item.remark });
 
-                    // B. 【修改处】：使用 split 和 join 避开防火墙拦截
-                    if(item.date) {
-                        const safeDateStr = item.date.split('-').join('/'); // 同样实现横杠转斜杠
-                        const d = new Date(safeDateStr);
-                        if(!isNaN(d.getTime())) { // 确保日期有效
-                            const monthIdx = d.getMonth(); // 直接获取 0-11 的月份索引
-                            adminMonthly[monthIdx] += val;
+                    // B. 【修改处 1】：纯字符串分割，绕开所有防火墙拦截，稳定提取月份
+                    if(item.date && item.date.length >= 7) {
+                        const parts = item.date.split('-'); 
+                        if(parts.length >= 2) {
+                            const monthIdx = parseInt(parts[1], 10) - 1; // 把 "03" 转为数字 2 (三月索引)
+                            if(monthIdx >= 0 && monthIdx <= 11) {
+                                adminMonthly[monthIdx] += val;
+                            }
                         }
                     }
 
@@ -1065,7 +1067,7 @@
                     annProjectCost += val;
                 }
             });
-            // ================= 结尾：到这里结束 =================
+            // ================= 结尾 1：到这里结束 =================
             
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
@@ -1767,6 +1769,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
