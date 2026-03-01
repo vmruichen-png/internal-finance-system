@@ -1394,9 +1394,204 @@ function toggleSupplier(trClass, iconElement) {
             // 【新增代码】如果停留在项目总览页，全局数据变化时自动刷新
             if (typeof renderProjectOverview === 'function' && document.getElementById('page-project-overview').classList.contains('active')) renderProjectOverview();
         }
+        // ================= 【新增代码】项目总览核心逻辑 =================
+        function renderProjectOverview() {
+            const selectEl = document.getElementById('overview-project-select');
+            
+            // 1. 保持下拉框选项最新
+            const currentVal = selectEl.value;
+            selectEl.innerHTML = dataStore.projects.length === 0 ? '<option value="">--暂无项目--</option>' : dataStore.projects.map(p => `<option value="${p.id}">📁 ${p.name} (${p.client})</option>`).join('');
+            if (currentVal && dataStore.projects.find(p => p.id === currentVal)) {
+                selectEl.value = currentVal;
+            } else if (dataStore.projects.length > 0) {
+                selectEl.value = dataStore.projects[0].id;
+            }
+
+            const pId = selectEl.value;
+            if (!pId) {
+                document.getElementById('overview-content').innerHTML = '<div class="card" style="text-align:center; padding: 40px; color: var(--text-muted);">请先在月度工作台创建项目</div>';
+                return;
+            }
+
+            const project = dataStore.projects.find(p => p.id === pId);
+            
+            // 2. 客户收款区统计
+            let incReceived = 0, incUnreceived = 0, incTotalCNY = 0;
+            let depositCNY = 0, balanceCNY = 0;
+            let curTotals = {}; // 原币种统计字典
+            
+            dataStore.income.filter(i => i.projectId === pId).forEach(i => {
+                const valCNY = i.amount * i.rate;
+                incTotalCNY += valCNY;
+                
+                if (i.status === '已到账') incReceived += valCNY;
+                else incUnreceived += valCNY;
+                
+                if (!curTotals[i.currency]) curTotals[i.currency] = 0;
+                curTotals[i.currency] += i.amount;
+                
+                // 根据备注字段智能区分定金与尾款
+                const remark = i.remark || '';
+                if (remark.includes('定') || remark.includes('首') || remark.includes('预')) depositCNY += valCNY;
+                else if (remark.includes('尾') || remark.includes('结')) balanceCNY += valCNY;
+            });
+
+            // 3. 供应商成本区统计
+            let expPaid = 0, expUnpaid = 0, expTotalCNY = 0;
+            let supplierMap = {};
+            
+            dataStore.expense.filter(e => e.projectId === pId).forEach(e => {
+                const valCNY = e.amount * e.rate;
+                expTotalCNY += valCNY;
+                
+                const isPaid = (e.status || '已支付') === '已支付';
+                if (isPaid) expPaid += valCNY;
+                else expUnpaid += valCNY;
+                
+                // 按供应商分组
+                const supp = e.supplier || '未登记供应商(或内部)';
+                if (!supplierMap[supp]) supplierMap[supp] = { total: 0, paid: 0, unpaid: 0 };
+                supplierMap[supp].total += valCNY;
+                if (isPaid) supplierMap[supp].paid += valCNY;
+                else supplierMap[supp].unpaid += valCNY;
+            });
+
+            // 4. 项目利润与健康度评分
+            const profit = incTotalCNY - expTotalCNY;
+            
+            let healthText = '🟢 状况良好 (各项指标正常)';
+            let healthColor = 'var(--income-color)';
+            
+            // 严格遵循您的健康度评分逻辑
+            if (profit < 0) {
+                healthText = '🔴 亏损预警 (账面利润为负)';
+                healthColor = 'var(--expense-color)';
+            } else if (expUnpaid > incReceived) {
+                healthText = '🔴 现金流断裂预警 (未付成本 > 已收账款)';
+                healthColor = 'var(--expense-color)';
+            } else if (incUnreceived > incReceived) {
+                healthText = '🟡 收款缓慢关注 (未收账款 > 已收账款)';
+                healthColor = '#f59e0b'; // 黄色
+            }
+
+            // 格式化多币种标签
+            const currencyHtml = Object.keys(curTotals).length > 0 
+                ? Object.entries(curTotals).map(([c, a]) => `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${a.toLocaleString('zh-CN', {minimumFractionDigits:2})} ${c}</span>`).join(' ') 
+                : '<span style="color:#999;">无数据</span>';
+
+            // 5. 渲染页面内容
+            const html = `
+                <div class="management-grid" style="margin-bottom: 20px;">
+                    <div class="card" style="border-top: 4px solid var(--profit-color);">
+                        <h2 class="section-title">📁 项目基础信息</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9rem;">
+                            <div><span style="color:var(--text-muted);">项目名称：</span><strong>${project.name}</strong></div>
+                            <div><span style="color:var(--text-muted);">客户公司：</span><strong>${project.client}</strong></div>
+                            <div><span style="color:var(--text-muted);">项目经理：</span><strong>👤 ${project.manager || '未指定'}</strong></div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color:var(--text-muted);">当前状态：</span>
+                                <!-- 状态快捷修改入口 -->
+                                <select onchange="updateProjectStatus('${project.id}', this.value)" style="padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; outline: none; cursor: pointer;">
+                                    <option value="进行中" ${project.orderStatus === '进行中' ? 'selected' : ''}>⏳ 进行中</option>
+                                    <option value="已完成" ${project.orderStatus === '已完成' ? 'selected' : ''}>✅ 已完成</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="border-top: 4px solid ${healthColor};">
+                        <h2 class="section-title">🩺 现金流与利润健康度</h2>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: ${healthColor}; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            ${healthText}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px; border-radius: 8px;">
+                            <span style="color:var(--text-muted); font-weight:600;">当前项目净利润 (折CNY)</span>
+                            <span style="font-size: 1.5rem; font-weight: 800; color: ${profit < 0 ? 'var(--expense-color)' : 'var(--profit-color)'};">¥ ${formatMoney(profit)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="management-grid">
+                    <!-- 收款统计区 -->
+                    <div class="card">
+                        <h2 class="section-title" style="color: var(--income-color);">💰 客户收款情况</h2>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                            <div style="background:#f0fdf4; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: #166534; font-weight:600;">总计收入 (折CNY)</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--income-color);">¥ ${formatMoney(incTotalCNY)}</div>
+                            </div>
+                            <div style="background:#f8fafc; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight:600;">已收金额</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--income-color);">¥ ${formatMoney(incReceived)}</div>
+                            </div>
+                            <div style="background:#fffbeb; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: #b45309; font-weight:600;">未收金额(应收)</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: #f59e0b;">¥ ${formatMoney(incUnreceived)}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; border-top: 1px dashed var(--border-color); padding-top: 12px;">
+                            <div style="margin-bottom: 8px;"><strong>原币种构成：</strong> ${currencyHtml}</div>
+                            <div style="color: var(--text-muted);"><strong>款项进度分析：</strong> 识别到 定/首付款 ≈ <span style="color:var(--income-color);">¥${formatMoney(depositCNY)}</span> | 尾/结款 ≈ <span style="color:var(--profit-color);">¥${formatMoney(balanceCNY)}</span> <span style="font-size:0.7rem;">(依赖备注字段文本)</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 供应商成本区 -->
+                    <div class="card">
+                        <h2 class="section-title" style="color: var(--expense-color);">💸 供应商成本分组</h2>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                            <div style="background:#fef2f2; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: #991b1b; font-weight:600;">总计成本 (折CNY)</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--expense-color);">¥ ${formatMoney(expTotalCNY)}</div>
+                            </div>
+                            <div style="background:#f8fafc; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight:600;">已支付成本</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--expense-color);">¥ ${formatMoney(expPaid)}</div>
+                            </div>
+                            <div style="background:#fffbeb; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: #b45309; font-weight:600;">未支付(应付)</div>
+                                <div style="font-size: 1.2rem; font-weight: 700; color: #f59e0b;">¥ ${formatMoney(expUnpaid)}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 0.85rem;">
+                            <strong>按供应商分组明细：</strong>
+                            <div class="table-wrapper" style="max-height: 180px; margin-top: 8px;">
+                                <table>
+                                    <thead>
+                                        <tr><th style="padding:6px; background:#f3f4f6;">供应商</th><th style="padding:6px; background:#f3f4f6;">总计</th><th style="padding:6px; background:#f3f4f6;">已付</th><th style="padding:6px; background:#f3f4f6;">未付(应付)</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${Object.entries(supplierMap).sort((a,b) => b[1].total - a[1].total).map(([supp, data]) => `
+                                            <tr>
+                                                <td style="padding:6px; font-weight:600;">${supp}</td>
+                                                <td style="padding:6px;">¥${formatMoney(data.total)}</td>
+                                                <td style="padding:6px; color:var(--income-color);">¥${formatMoney(data.paid)}</td>
+                                                <td style="padding:6px; color:#f59e0b; font-weight:600;">¥${formatMoney(data.unpaid)}</td>
+                                            </tr>
+                                        `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;padding:6px;">暂无各项成本明细</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('overview-content').innerHTML = html;
+        }
+
+        // 修改项目状态后保存到云端并刷新总览页面
+        async function updateProjectStatus(projectId, newStatus) {
+            const pIndex = dataStore.projects.findIndex(p => p.id === projectId);
+            if(pIndex > -1) {
+                dataStore.projects[pIndex].orderStatus = newStatus;
+                await saveData(); // 触发云端保存
+                renderProjectOverview(); // 即刻刷新局部页面
+            }
+        }
     </script>
 </body>
 </html>
+
 
 
 
