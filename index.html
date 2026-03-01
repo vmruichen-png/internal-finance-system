@@ -1129,16 +1129,17 @@
             if(chartBarEl) {
                 chartBarEl.innerHTML = '';
                 // 找出最大值，确保除数不为0
-                const maxVal = Math.max(...adminMonthly, 1); 
-                
+                const maxVal = Math.max(...adminMonthly, 1);
                 adminMonthly.forEach((val, idx) => {
                     // 计算高度百分比
                     let heightPct = (val / maxVal) * 100;
                     // 【视觉优化】如果有值但太小(小于2%)，强制显示为2%，否则看不见
                     if(val > 0 && heightPct < 2) heightPct = 2;
                     
+                    // 【修改处 2】：给 bar-col 增加 style="height: 100%; justify-content: flex-end;"
+                    // 彻底解决容器高度为0导致柱子看不见的布局 bug
                     chartBarEl.innerHTML += `
-                        <div class="bar-col">
+                        <div class="bar-col" style="height: 100%; justify-content: flex-end;">
                             <div class="bar" style="height: ${val > 0 ? heightPct : 0}%;">
                                 ${val > 0 ? `<div class="bar-val">¥${(val/1000).toFixed(1)}k</div>` : ''}
                             </div>
@@ -1147,7 +1148,8 @@
                     `;
                 });
             }
-
+            // ================= 结尾 2：到这里结束 =================
+            
             // ================= 2. 饼图 (保持不变) =================
             const chartPieEl = document.getElementById('chart-category-pie');
             const chartLegendEl = document.getElementById('chart-category-legend');
@@ -1765,6 +1767,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
