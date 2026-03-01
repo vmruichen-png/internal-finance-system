@@ -862,7 +862,18 @@
                 `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span><span class="text-muted-sm">原币: ${item.amount} ${item.currency}</span>`;
         }
 
+         function clearMonthFilter() {
+            document.getElementById('global-month').value = '';
+            updateMonthlyDashboard();
+        }
+        
         function renderTables() {
+            const currentMonth = document.getElementById('global-month').value;
+            const displayTitle = currentMonth ? `(仅显示本月: ${currentMonth})` : `(显示全部历史记录)`;
+            const titleInc = document.getElementById('title-income');
+            const titleExp = document.getElementById('title-expense');
+            if(titleInc) titleInc.innerHTML = `💰 收入登记 <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">${displayTitle}</span>`;
+            if(titleExp) titleExp.innerHTML = `💸 支出/费用登记 <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">${displayTitle}</span>`;
             const incTbody = document.getElementById('table-income');
             incTbody.innerHTML = '';
             const incData = dataStore.income.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -1363,6 +1374,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
