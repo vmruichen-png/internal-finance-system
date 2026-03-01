@@ -633,9 +633,12 @@
             document.getElementById(pageId).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
+            
             if(pageId === 'page-monthly') updateMonthlyDashboard();
             if(pageId === 'page-annual') renderAnnualDashboard();
             if(pageId === 'page-client') renderClientDashboard();
+            // 【新增代码】切换到项目总览时渲染
+            if(pageId === 'page-project-overview') renderProjectOverview(); 
         }
 
         // ================= 月度工作台与交互逻辑 =================
@@ -1392,6 +1395,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
