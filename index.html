@@ -1035,14 +1035,13 @@
                 if(item.status === '已到账') annReceived += val; 
             });
 
+            // ================= 开头：从这里开始 =================
             // 2. 统计支出
             yearExpense.forEach(item => { 
-                const val = item.amount * item.rate; 
-                
+                const val = item.amount * item.rate;
                 if(item.projectId === 'ADMIN') {
                     // --- 管理费逻辑 ---
-                    annAdminCost += val; 
-                    
+                    annAdminCost += val;
                     // A. 按科目分组
                     if(!adminMap[item.category]) {
                         adminMap[item.category] = { total: 0, count: 0, items: [] };
@@ -1051,28 +1050,21 @@
                     adminMap[item.category].count += 1;
                     adminMap[item.category].items.push({ date: item.date, val: val, remark: item.remark });
 
-                    // B. 【关键修改】更强壮的日期解析逻辑
-                    // 无论日期是 "2023-05-01" 还是 "2023/05/01" 都能识别
-                    let monthIdx = -1;
-                    if(item.date && item.date.length >= 7) {
-                        // 使用正则表达式同时分割 - 或 /
-                        const parts = item.date.split(/[-/]/); 
-                        if(parts.length >= 2) {
-                            // parts[1] 是月份 (01-12)，减1转为数组下标 (0-11)
-                            monthIdx = parseInt(parts[1]) - 1;
+                    // B. 【修改处】：使用更可靠的 Date 对象解析月份
+                    if(item.date) {
+                        const d = new Date(item.date.replace(/-/g, '/')); // 兼容不同浏览器的横杠格式
+                        if(!isNaN(d.getTime())) { // 确保日期有效
+                            const monthIdx = d.getMonth(); // 直接获取 0-11 的月份索引
+                            adminMonthly[monthIdx] += val;
                         }
-                    }
-                    
-                    // 如果解析成功，累加到对应月份
-                    if(monthIdx >= 0 && monthIdx <= 11) {
-                        adminMonthly[monthIdx] += val;
                     }
 
                 } else {
                     // --- 项目成本逻辑 ---
-                    annProjectCost += val; 
+                    annProjectCost += val;
                 }
             });
+            // ================= 结尾：到这里结束 =================
             
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
@@ -1772,6 +1764,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
