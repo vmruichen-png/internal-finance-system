@@ -1050,9 +1050,10 @@
                     adminMap[item.category].count += 1;
                     adminMap[item.category].items.push({ date: item.date, val: val, remark: item.remark });
 
-                    // B. 【修改处】：使用更可靠的 Date 对象解析月份
+                    // B. 【修改处】：使用 split 和 join 避开防火墙拦截
                     if(item.date) {
-                        const d = new Date(item.date.replace(/-/g, '/')); // 兼容不同浏览器的横杠格式
+                        const safeDateStr = item.date.split('-').join('/'); // 同样实现横杠转斜杠
+                        const d = new Date(safeDateStr);
                         if(!isNaN(d.getTime())) { // 确保日期有效
                             const monthIdx = d.getMonth(); // 直接获取 0-11 的月份索引
                             adminMonthly[monthIdx] += val;
@@ -1764,6 +1765,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
