@@ -628,6 +628,76 @@
         </div>
     </div>
 
+    <div id="editIncomeModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn" onclick="closeEditIncomeModal()">&times;</span>
+            <h2 class="section-title" style="margin-bottom: 20px; font-size: 1.2rem; border:none; padding:0;">✏️ 编辑收入记录</h2>
+            <form id="form-edit-income" class="inline-form grid-1" style="border:none; padding:0;">
+                <input type="hidden" id="edit-inc-id">
+                <div class="form-group"><label>收款日期</label><input type="date" id="edit-inc-date" class="form-control" required></div>
+                <div class="form-group"><label>所属合同/项目</label><select id="edit-inc-project" class="form-control" required></select></div>
+                <div class="form-group"><label>款项状态</label>
+                    <select id="edit-inc-status" class="form-control" required>
+                        <option value="已到账">🟢 已到账</option>
+                        <option value="应收">🟠 应收 (待结)</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group"><label>币种</label>
+                        <select id="edit-inc-currency" class="form-control" required>
+                            <option value="CNY">CNY - 人民币</option><option value="USD">USD - 美元</option>
+                            <option value="EUR">EUR - 欧元</option><option value="HKD">HKD - 港币</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>金额</label><input type="number" id="edit-inc-amount" class="form-control" step="0.01" min="0" required></div>
+                </div>
+                <div class="form-group"><label style="color:#f43f5e;">汇率 (CNY填1)</label><input type="number" id="edit-inc-rate" class="form-control" step="0.0001" min="0.0001" required></div>
+                <div class="form-group"><label>备注</label><input type="text" id="edit-inc-remark" class="form-control"></div>
+                <button type="submit" class="btn-submit btn-income" style="margin-top: 15px; padding: 12px;">保存修改并同步</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="editExpenseModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn" onclick="closeEditExpenseModal()">&times;</span>
+            <h2 class="section-title" style="margin-bottom: 20px; font-size: 1.2rem; border:none; padding:0;">✏️ 编辑支出记录</h2>
+            <form id="form-edit-expense" class="inline-form grid-1" style="border:none; padding:0;">
+                <input type="hidden" id="edit-exp-id">
+                <div class="form-group"><label>发生日期</label><input type="date" id="edit-exp-date" class="form-control" required></div>
+                <div class="form-group"><label>费用归属</label><select id="edit-exp-project" class="form-control" required></select></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group"><label>付款状态</label>
+                        <select id="edit-exp-status" class="form-control" required>
+                            <option value="已支付">🟢 已支付</option>
+                            <option value="应付">🟠 应付 (未付)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>科目</label>
+                        <select id="edit-exp-category" class="form-control" required>
+                            <option value="货款">货款</option><option value="物流">物流</option><option value="工资/社保">工资/社保</option>
+                            <option value="房租/水电">房租/水电</option><option value="差旅/招待">差旅/招待</option>
+                            <option value="营销/广告">营销/广告</option><option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>供应商/收款方</label><input type="text" id="edit-exp-supplier" class="form-control"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group"><label>币种</label>
+                        <select id="edit-exp-currency" class="form-control" required>
+                            <option value="CNY">CNY - 人民币</option><option value="USD">USD - 美元</option>
+                            <option value="EUR">EUR - 欧元</option><option value="HKD">HKD - 港币</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>金额</label><input type="number" id="edit-exp-amount" class="form-control" step="0.01" min="0" required></div>
+                </div>
+                <div class="form-group"><label style="color:#f43f5e;">汇率 (CNY填1)</label><input type="number" id="edit-exp-rate" class="form-control" step="0.0001" min="0.0001" required></div>
+                <div class="form-group"><label>备注</label><input type="text" id="edit-exp-remark" class="form-control"></div>
+                <button type="submit" class="btn-submit btn-expense" style="margin-top: 15px; padding: 12px;">保存修改并同步</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         // ================= 1. 数据结构与云端通信逻辑 =================
         let dataStore = { projects:[], income:[], expense:[], companies:[], managers:[] };
@@ -1769,6 +1839,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
