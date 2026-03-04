@@ -1842,9 +1842,94 @@ function toggleSupplier(trClass, iconElement) {
                 renderProjectOverview(); // 即刻刷新局部页面
             }
         }
+
+        // ================= 【新增代码】：收入/支出明细编辑逻辑 =================
+        function editIncome(id) {
+            const item = dataStore.income.find(i => i.id === id);
+            if(!item) return;
+
+            const select = document.getElementById('edit-inc-project');
+            select.innerHTML = dataStore.projects.map(p => `<option value="${p.id}">📁 ${p.name}</option>`).join('');
+
+            document.getElementById('edit-inc-id').value = item.id;
+            document.getElementById('edit-inc-date').value = item.date;
+            select.value = item.projectId;
+            document.getElementById('edit-inc-status').value = item.status;
+            document.getElementById('edit-inc-currency').value = item.currency || 'CNY';
+            document.getElementById('edit-inc-amount').value = item.amount;
+            document.getElementById('edit-inc-rate').value = item.rate || 1.0000;
+            document.getElementById('edit-inc-remark').value = item.remark || '';
+
+            document.getElementById('editIncomeModal').classList.add('show');
+        }
+
+        function closeEditIncomeModal() { document.getElementById('editIncomeModal').classList.remove('show'); }
+
+        document.getElementById('form-edit-income').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-inc-id').value;
+            const itemIndex = dataStore.income.findIndex(i => i.id === id);
+            if(itemIndex > -1) {
+                dataStore.income[itemIndex].date = document.getElementById('edit-inc-date').value;
+                dataStore.income[itemIndex].projectId = document.getElementById('edit-inc-project').value;
+                dataStore.income[itemIndex].status = document.getElementById('edit-inc-status').value;
+                dataStore.income[itemIndex].currency = document.getElementById('edit-inc-currency').value;
+                dataStore.income[itemIndex].amount = parseFloat(document.getElementById('edit-inc-amount').value);
+                dataStore.income[itemIndex].rate = parseFloat(document.getElementById('edit-inc-rate').value) || 1.0000;
+                dataStore.income[itemIndex].remark = document.getElementById('edit-inc-remark').value;
+                
+                await saveData(); 
+                closeEditIncomeModal();
+            }
+        });
+
+        function editExpense(id) {
+            const item = dataStore.expense.find(i => i.id === id);
+            if(!item) return;
+
+            const expSelect = document.getElementById('edit-exp-project');
+            const projOptions = dataStore.projects.map(p => `<option value="${p.id}">📁 ${p.name}</option>`).join('');
+            expSelect.innerHTML = `<optgroup label="🏢 公司公摊"><option value="ADMIN">🏢 公司公共管理费 (公摊)</option></optgroup><optgroup label="📁 计入项目成本">${projOptions}</optgroup>`;
+
+            document.getElementById('edit-exp-id').value = item.id;
+            document.getElementById('edit-exp-date').value = item.date;
+            expSelect.value = item.projectId;
+            document.getElementById('edit-exp-status').value = item.status || '已支付';
+            document.getElementById('edit-exp-category').value = item.category;
+            document.getElementById('edit-exp-supplier').value = item.supplier || '';
+            document.getElementById('edit-exp-currency').value = item.currency || 'CNY';
+            document.getElementById('edit-exp-amount').value = item.amount;
+            document.getElementById('edit-exp-rate').value = item.rate || 1.0000;
+            document.getElementById('edit-exp-remark').value = item.remark || '';
+
+            document.getElementById('editExpenseModal').classList.add('show');
+        }
+
+        function closeEditExpenseModal() { document.getElementById('editExpenseModal').classList.remove('show'); }
+
+        document.getElementById('form-edit-expense').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-exp-id').value;
+            const itemIndex = dataStore.expense.findIndex(i => i.id === id);
+            if(itemIndex > -1) {
+                dataStore.expense[itemIndex].date = document.getElementById('edit-exp-date').value;
+                dataStore.expense[itemIndex].projectId = document.getElementById('edit-exp-project').value;
+                dataStore.expense[itemIndex].status = document.getElementById('edit-exp-status').value;
+                dataStore.expense[itemIndex].category = document.getElementById('edit-exp-category').value;
+                dataStore.expense[itemIndex].supplier = document.getElementById('edit-exp-supplier').value;
+                dataStore.expense[itemIndex].currency = document.getElementById('edit-exp-currency').value;
+                dataStore.expense[itemIndex].amount = parseFloat(document.getElementById('edit-exp-amount').value);
+                dataStore.expense[itemIndex].rate = parseFloat(document.getElementById('edit-exp-rate').value) || 1.0000;
+                dataStore.expense[itemIndex].remark = document.getElementById('edit-exp-remark').value;
+                
+                await saveData();
+                closeEditExpenseModal();
+            }
+        });
     </script>
 </body>
 </html>
+
 
 
 
