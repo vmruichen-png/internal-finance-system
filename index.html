@@ -1059,7 +1059,10 @@
                     <td><span class="tag ${statusTag}">${item.status}</span></td>
                     <td>${getAmountHtml(item, true)}</td>
                     <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
-                    <td><button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button></td>
+                    <td>
+                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editIncome('${item.id}')">编辑</button>
+                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button>
+                    </td>
                 </tr>`;
             });
 
@@ -1839,6 +1842,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
