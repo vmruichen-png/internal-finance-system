@@ -337,7 +337,7 @@
                             <input type="number" id="inc-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" required>
                         </div>
                         <div class="form-group" style="grid-column: span 1;"><label>备注</label><input type="text" id="inc-remark" class="form-control" placeholder="选填，如：首付款"></div>
-                        // ================= 开头：从这里开始 =================
+                    
                         <div class="form-group calc-preview full-span">👉 折合人民币：<span id="inc-preview" class="text-profit">¥ 0.00</span></div>
                         <button type="submit" class="btn-submit btn-income full-span">录入财务收入账</button>
                     </form>
@@ -348,7 +348,6 @@
                     </div>
 
                     <div class="table-wrapper">
-// ================= 结尾：到这里结束 =================
                         <table>
                             <thead>
                                 <tr>
@@ -398,7 +397,6 @@
                             <label style="color:#f43f5e;">实时汇率 (非CNY必填)</label>
                             <input type="number" id="exp-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" required>
                         </div>
-                        // ================= 开头：从这里开始 =================
                         <div class="form-group calc-preview full-span">👉 折合人民币：<span id="exp-preview" class="text-expense">¥ 0.00</span></div>
                         <button type="submit" class="btn-submit btn-expense full-span">录入财务支出账</button>
                     </form>
@@ -409,7 +407,6 @@
                     </div>
 
                     <div class="table-wrapper">
-// ================= 结尾：到这里结束 =================
                         <table>
                             <thead>
                                 <!-- 【替换位置 3.2】替换 table-expense 的 thead 里的 tr -->
@@ -1127,7 +1124,6 @@
                 if(item.status === '已到账') annReceived += val; 
             });
 
-            // ================= 开头：从这里开始 =================
             // ================= 开头 1：从这里开始替换 =================
             // 2. 统计支出
             yearExpense.forEach(item => { 
@@ -1159,7 +1155,6 @@
                     annProjectCost += val;
                 }
             });
-            // ================= 结尾 1：到这里结束 =================
             
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
@@ -1935,7 +1930,6 @@ function toggleSupplier(trClass, iconElement) {
                 dataStore.expense[itemIndex].supplier = document.getElementById('edit-exp-supplier').value;
                 dataStore.expense[itemIndex].currency = document.getElementById('edit-exp-currency').value;
                 dataStore.expense[itemIndex].amount = parseFloat(document.getElementById('edit-exp-amount').value);
-                // ================= 开头：从这里开始 =================
                 dataStore.expense[itemIndex].rate = parseFloat(document.getElementById('edit-exp-rate').value) || 1.0000;
                 dataStore.expense[itemIndex].remark = document.getElementById('edit-exp-remark').value;
                 
@@ -1968,8 +1962,8 @@ function toggleSupplier(trClass, iconElement) {
         }
     </script>
 </body>
-// ================= 结尾：到这里结束 =================
 </html>
+
 
 
 
