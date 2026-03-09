@@ -1389,14 +1389,18 @@ function toggleSupplier(trClass, iconElement) {
                             pDetail.totalCNY += cnyVal;
                         }
                     }
-                    if(!mgrMap[mId]) {
-                    mgrMap[mId] = { name: p.manager || '未分类经理', totalAmountCNY: 0, usdIncome: 0, cnyIncome: 0, projects: [] };
-                }
-
-                if(!compMap[cId].managers[mId].projects.find(pr => pr.id === p.id)) {
-                    compMap[cId].managers[mId].projects.push({ id: p.id, name: p.name, usd: 0, cny: 0, totalCNY: 0, expenseCNY: 0 });
-                    mgrMap[mId].projects.push({ name: p.name, amountCNY: 0, usd: 0, cny: 0, client: p.client });
-                }
+                    if(mgrMap[mId]) {
+                        mgrMap[mId].totalAmountCNY += cnyVal;
+                        if(item.currency === 'USD') mgrMap[mId].usdIncome += item.amount;
+                        if(item.currency === 'CNY') mgrMap[mId].cnyIncome += item.amount;
+                        
+                        const mPDetail = mgrMap[mId].projects.find(mp => mp.name === p.name);
+                        if(mPDetail) {
+                            mPDetail.amountCNY += cnyVal;
+                            if(item.currency === 'USD') mPDetail.usd += item.amount;
+                            if(item.currency === 'CNY') mPDetail.cny += item.amount;
+                        }
+                    }
                 }
             });
             
@@ -1985,6 +1989,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
