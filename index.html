@@ -1474,17 +1474,36 @@ function toggleSupplier(trClass, iconElement) {
                 `;
             }
             
-            // 5. 渲染项目经理排行部分（逻辑保持不变）
+           // 5. 渲染项目经理排行部分
             const mgrArr = Object.values(mgrMap).filter(m => m.totalAmountCNY > 0).sort((a, b) => b.totalAmountCNY - a.totalAmountCNY);
             const tMgr = document.getElementById('table-client-manager');
             tMgr.innerHTML = '';
-            if(mgrArr.length === 0) tMgr.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            if(mgrArr.length === 0) tMgr.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            
             mgrArr.forEach((m, idx) => {
                 let rankHtml = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<span class="rank-num">${idx + 1}</span>`;
                 const trId = `client-mgr-${idx}`; 
-                tMgr.innerHTML += `<tr style="background: #fff; font-weight: 600;"><td style="text-align:center;">${rankHtml} <span class="toggle-icon" onclick="toggleSupplier('${trId}', this)" style="margin-left: 5px; font-size: 0.8rem;">▶</span></td><td style="font-weight:600;">👤 ${m.name}</td><td style="color: var(--income-color); font-weight:700;">¥ ${formatMoney(m.totalAmountCNY)}</td></tr>`;
+                
+                // 渲染主干（经理汇总），展开后共 5 列
+                tMgr.innerHTML += `
+                    <tr style="background: #fff; font-weight: 600;">
+                        <td style="text-align:center;">${rankHtml} <span class="toggle-icon" onclick="toggleSupplier('${trId}', this)" style="margin-left: 5px; font-size: 0.8rem;">▶</span></td>
+                        <td style="font-weight:600;">👤 ${m.name}</td>
+                        <td style="color: #2563eb;">$ ${formatMoney(m.usdIncome)}</td>
+                        <td style="color: var(--text-main);">¥ ${formatMoney(m.cnyIncome)}</td>
+                        <td style="color: var(--income-color); font-weight:700;">¥ ${formatMoney(m.totalAmountCNY)}</td>
+                    </tr>`;
+                
+                // 渲染项目明细（子行）
                 m.projects.sort((a,b) => b.amountCNY - a.amountCNY).forEach(p => {
-                    tMgr.innerHTML += `<tr class="sub-row ${trId}"><td></td><td style="color: var(--text-muted); padding-left: 20px;">↳ 📁 ${p.name} <span style="font-size: 0.7rem; color: #8b5cf6;">(${p.client})</span></td><td style="color: var(--text-muted); font-size: 0.8rem;">¥ ${formatMoney(p.amountCNY)}</td></tr>`;
+                    tMgr.innerHTML += `
+                        <tr class="sub-row ${trId}">
+                            <td></td>
+                            <td style="color: var(--text-muted); padding-left: 20px;">↳ 📁 ${p.name} <span style="font-size: 0.7rem; color: #8b5cf6;">(${p.client})</span></td>
+                            <td style="color: #60a5fa; font-size: 0.8rem;">$ ${formatMoney(p.usd)}</td>
+                            <td style="color: #94a3b8; font-size: 0.8rem;">¥ ${formatMoney(p.cny)}</td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">¥ ${formatMoney(p.amountCNY)}</td>
+                        </tr>`;
                 });
             });
         }
@@ -1966,6 +1985,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
