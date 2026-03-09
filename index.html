@@ -1360,12 +1360,12 @@ function toggleSupplier(trClass, iconElement) {
                 }
 
                 if(!mgrMap[mId]) {
-                    mgrMap[mId] = { name: p.manager || '未分类经理', totalAmountCNY: 0, projects: [] };
+                    mgrMap[mId] = { name: p.manager || '未分类经理', totalAmountCNY: 0, usdIncome: 0, cnyIncome: 0, projects: [] };
                 }
 
                 if(!compMap[cId].managers[mId].projects.find(pr => pr.id === p.id)) {
                     compMap[cId].managers[mId].projects.push({ id: p.id, name: p.name, usd: 0, cny: 0, totalCNY: 0, expenseCNY: 0 });
-                    mgrMap[mId].projects.push({ name: p.name, amountCNY: 0, client: p.client });
+                    mgrMap[mId].projects.push({ name: p.name, amountCNY: 0, usd: 0, cny: 0, client: p.client });
                 }
             });
             
@@ -1963,6 +1963,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
