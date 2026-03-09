@@ -1935,6 +1935,7 @@ function toggleSupplier(trClass, iconElement) {
                 dataStore.expense[itemIndex].supplier = document.getElementById('edit-exp-supplier').value;
                 dataStore.expense[itemIndex].currency = document.getElementById('edit-exp-currency').value;
                 dataStore.expense[itemIndex].amount = parseFloat(document.getElementById('edit-exp-amount').value);
+                // ================= 开头：从这里开始 =================
                 dataStore.expense[itemIndex].rate = parseFloat(document.getElementById('edit-exp-rate').value) || 1.0000;
                 dataStore.expense[itemIndex].remark = document.getElementById('edit-exp-remark').value;
                 
@@ -1942,9 +1943,34 @@ function toggleSupplier(trClass, iconElement) {
                 closeEditExpenseModal();
             }
         });
+
+        // ================= 【新增代码】：明细表格快捷搜索逻辑 =================
+        function filterTable(inputId, tableId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toLowerCase();
+            const tbody = document.getElementById(tableId);
+            const trs = tbody.getElementsByTagName('tr');
+
+            // 遍历所有表格行，如果行内文字包含搜索词（天然支持备注列），则显示；否则隐藏
+            for (let i = 0; i < trs.length; i++) {
+                // 如果是“无记录”的提示行，直接跳过
+                if (trs[i].getElementsByTagName('td').length === 1) continue;
+                
+                // 获取当前行所有的文本内容（包含了项目名、金额、备注等一切可视文字）
+                const textContent = trs[i].textContent || trs[i].innerText;
+                
+                if (textContent.toLowerCase().indexOf(filter) > -1) {
+                    trs[i].style.display = ""; // 匹配成功，显示
+                } else {
+                    trs[i].style.display = "none"; // 匹配失败，隐藏
+                }
+            }
+        }
     </script>
 </body>
+// ================= 结尾：到这里结束 =================
 </html>
+
 
 
 
