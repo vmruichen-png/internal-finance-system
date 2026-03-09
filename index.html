@@ -315,7 +315,7 @@
 
             <div class="management-grid">
                 <div class="card">
-                     <h2 class="section-title" style="color: var(--income-color);" id="title-income">💰 收入登记</h2>
+                    <h2 class="section-title" style="color: var(--income-color);" id="title-income">💰 收入登记</h2>
                     <form class="inline-form grid-4" id="form-income">
                         <div class="form-group"><label>收款日期</label><input type="date" id="inc-date" class="form-control" required></div>
                         <div class="form-group" style="grid-column: span 2;"><label>所属合同/项目</label><select id="inc-project" class="form-control" required></select></div>
@@ -337,14 +337,13 @@
                             <input type="number" id="inc-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" required>
                         </div>
                         <div class="form-group" style="grid-column: span 1;"><label>备注</label><input type="text" id="inc-remark" class="form-control" placeholder="选填，如：首付款"></div>
-                    
                         <div class="form-group calc-preview full-span">👉 折合人民币：<span id="inc-preview" class="text-profit">¥ 0.00</span></div>
                         <button type="submit" class="btn-submit btn-income full-span">录入财务收入账</button>
                     </form>
 
                     <div style="margin: 15px 0 10px 0; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.1rem;">🔍</span>
-                        <input type="text" id="search-income" class="form-control" style="width: 100%; max-width: 300px; border-color: var(--income-color);" placeholder="快速搜索项目名、金额或备注..." onkeyup="filterTable('search-income', 'table-income')">
+                        <input type="text" id="search-income" class="form-control" style="width: 100%; border-color: var(--income-color);" placeholder="快速搜索项目名、金额或备注..." onkeyup="filterTable('search-income', 'table-income')">
                     </div>
 
                     <div class="table-wrapper">
@@ -1963,6 +1962,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
