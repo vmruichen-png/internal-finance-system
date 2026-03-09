@@ -362,21 +362,15 @@
                 <div class="card">
                      <h2 class="section-title" style="color: var(--expense-color);" id="title-expense">💸 支出/费用登记</h2>
                     <form class="inline-form grid-4" id="form-expense">
-                    <!-- 【替换位置 2】替换旧的 form-expense -->
-                    <form class="inline-form grid-4" id="form-expense">
                         <div class="form-group"><label>发生日期</label><input type="date" id="exp-date" class="form-control" required></div>
                         <div class="form-group" style="grid-column: span 2;"><label>费用归属</label><select id="exp-project-select" class="form-control" required></select></div>
-                        
-                        <!-- 新增：付款状态字段 -->
                         <div class="form-group"><label>付款状态</label>
                             <select id="exp-status" class="form-control" required>
                                 <option value="已支付" selected>🟢 已支付</option>
                                 <option value="应付">🟠 应付 (未付)</option>
                             </select>
                         </div>
-                        <div class="form-group"><label>供应商/收款方</label><input type="text" id="exp-supplier" class="form-control" placeholder="选填，内部支出可留空">
-                        </div>
-                        
+                        <div class="form-group"><label>供应商/收款方</label><input type="text" id="exp-supplier" class="form-control" placeholder="选填，内部支出可留空"></div>
                         <div class="form-group"><label>科目</label>
                             <select id="exp-category" class="form-control" required>
                                 <option value="货款">货款</option><option value="物流">物流</option><option value="工资/社保">工资/社保</option>
@@ -402,13 +396,12 @@
 
                     <div style="margin: 15px 0 10px 0; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.1rem;">🔍</span>
-                        <input type="text" id="search-expense" class="form-control" style="width: 100%; max-width: 350px; border-color: var(--expense-color);" placeholder="快速搜索项目名、科目、金额或备注..." onkeyup="filterTable('search-expense', 'table-expense')">
+                        <input type="text" id="search-expense" class="form-control" style="width: 100%; border-color: var(--expense-color);" placeholder="快速搜索项目名、科目、金额或备注..." onkeyup="filterTable('search-expense', 'table-expense')">
                     </div>
 
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <!-- 【替换位置 3.2】替换 table-expense 的 thead 里的 tr -->
                                 <tr>
                                     <th width="12%">日期</th><th width="18%">项目/归属</th><th width="10%">科目</th>
                                     <th width="12%">状态</th>
@@ -1962,6 +1955,7 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
+
 
 
 
