@@ -1036,31 +1036,50 @@
 
         // 【新增】从 Hostinger 服务器获取数据
         async function loadDataFromServer() {
-            try {
-                syncStatusEl.innerText = "⏳ 正在同步...";
-                syncStatusEl.style.display = "flex";
-                syncStatusEl.style.color = "#f59e0b";
+            syncStatusEl.innerText = "⏳ 正在同步...";
+            syncStatusEl.style.display = "flex";
+            syncStatusEl.style.color = "#f59e0b";
 
-                const response = await fetch('api.php');
-                if (response.ok) {
-                    const serverData = await response.json();
+            let retries = 3;
+            while (retries > 0) {
+                try {
+                    const response = await fetch('api.php?t=' + Date.now());
+                    const text = await response.text();
+                    let serverData;
+                    try {
+                        serverData = JSON.parse(text);
+                    } catch(e) {
+                        retries--;
+                        if (retries > 0) {
+                            await new Promise(r => setTimeout(r, 1500));
+                            continue;
+                        }
+                        syncStatusEl.innerText = "❌ 数据解析失败";
+                        syncStatusEl.style.color = "#ef4444";
+                        return;
+                    }
                     dataStore.projects = serverData.projects || [];
-                    dataStore.income = serverData.income ||[];
-                    dataStore.expense = serverData.expense ||[];
-                    dataStore.companies = serverData.companies ||[];
-                    dataStore.managers = serverData.managers ||[];
-                    
+                    dataStore.income = serverData.income || [];
+                    dataStore.expense = serverData.expense || [];
+                    dataStore.companies = serverData.companies || [];
+                    dataStore.managers = serverData.managers || [];
+
                     updateMonthlyDashboard();
                     renderAnnualDashboard();
-                    
+
                     syncStatusEl.innerText = "✅ 已与云端同步";
                     syncStatusEl.style.color = "#10b981";
+                    return;
+                } catch (error) {
+                    retries--;
+                    if (retries > 0) {
+                        await new Promise(r => setTimeout(r, 1500));
+                    } else {
+                        console.error("加载数据失败:", error);
+                        syncStatusEl.innerText = "❌ 连接云端失败";
+                        syncStatusEl.style.color = "#ef4444";
+                    }
                 }
-            } catch (error) {
-                console.error("加载数据失败:", error);
-                syncStatusEl.innerText = "❌ 连接云端失败";
-                syncStatusEl.style.color = "#ef4444";
-                alert("无法连接到服务器加载数据，请检查网络或确认 api.php 是否已部署！");
             }
         }
 
