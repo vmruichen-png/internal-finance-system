@@ -207,18 +207,24 @@
         <div class="container">
             <!-- ================= 替换：修改此处 ================= -->
             <div class="header">
-                <h1>📅 月度财务工作台</h1>
-                <div class="controls-wrapper">
-                    <div class="filter-wrapper">
-                        <label for="global-month">数据月份：</label>
-                        <input type="month" id="global-month" class="filter-input">
-                        <!-- 【新增】下面这行“显示全部历史明细”按钮代码 -->
-                        <button type="button" class="btn-action" style="background-color: var(--text-muted); padding: 6px 12px; font-size: 0.85rem;" onclick="clearMonthFilter()">显示全部历史明细</button>
-                    </div>
-                    <!-- 【修改】文案改为“当前明细” -->
-                    <button class="btn-action" onclick="exportExcel()">⬇️ 导出当前明细</button>
-                </div>
+    <h1>📅 月度财务工作台</h1>
+    <div class="controls-wrapper">
+        <div class="filter-wrapper">
+            <div id="month-mode-toggle" style="display:flex; background:#f3f4f6; border-radius:8px; padding:3px; gap:2px;">
+                <button id="toggle-btn-month" onclick="setMonthMode('month')"
+                    style="padding:6px 14px; border-radius:6px; border:none; font-size:0.85rem; font-weight:600; cursor:pointer; background:#3b82f6; color:white; transition:all 0.2s;">
+                    📅 按月筛选
+                </button>
+                <button id="toggle-btn-all" onclick="setMonthMode('all')"
+                    style="padding:6px 14px; border-radius:6px; border:none; font-size:0.85rem; font-weight:600; cursor:pointer; background:transparent; color:#6b7280; transition:all 0.2s;">
+                    📋 全部历史
+                </button>
             </div>
+            <input type="month" id="global-month" class="filter-input">
+        </div>
+        <button class="btn-action" onclick="exportExcel()">⬇️ 导出当前明细</button>
+    </div>
+</div>
 
             <!-- 【替换位置 1】替换原有的 overview-grid grid-5 区域 -->
             <div class="overview-grid grid-6">
