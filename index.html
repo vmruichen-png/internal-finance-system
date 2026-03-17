@@ -730,6 +730,29 @@
         // 绑定默认时间
         document.getElementById('global-month').value = currentMonthStr;
         document.getElementById('annual-year').value = currentYearStr;
+
+        function setMonthMode(mode) {
+            const monthInput = document.getElementById('global-month');
+            const btnMonth = document.getElementById('toggle-btn-month');
+            const btnAll = document.getElementById('toggle-btn-all');
+
+            if (mode === 'month') {
+                monthInput.style.display = 'block';
+                if (!monthInput.value) monthInput.value = currentMonthStr;
+                btnMonth.style.background = '#3b82f6';
+                btnMonth.style.color = 'white';
+                btnAll.style.background = 'transparent';
+                btnAll.style.color = '#6b7280';
+            } else {
+                monthInput.style.display = 'none';
+                monthInput.value = '';
+                btnAll.style.background = '#3b82f6';
+                btnAll.style.color = 'white';
+                btnMonth.style.background = 'transparent';
+                btnMonth.style.color = '#6b7280';
+            }
+            updateMonthlyDashboard();
+        }
         document.getElementById('prj-date').value = todayStr;
         document.getElementById('inc-date').value = todayStr;
         document.getElementById('exp-date').value = todayStr;
