@@ -248,10 +248,9 @@
     }
 
     .form-control {
-        padding: 8px 10px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 0.85rem;
+        width: 100%; min-width: 0; box-sizing: border-box; /* 👈 紧箍咒：防止任何输入框撑破卡片 */
+        padding: 8px 10px; border: 1px solid var(--border-color);
+        border-radius: 8px; font-size: 0.85rem;
         outline: none;
         background: #fff;
         color: var(--text-main);
