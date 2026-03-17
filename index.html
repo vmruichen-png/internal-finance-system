@@ -1421,53 +1421,64 @@
             const titleExp = document.getElementById('title-expense');
             if(titleInc) titleInc.innerHTML = `💰 收入登记 <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">${displayTitle}</span>`;
             if(titleExp) titleExp.innerHTML = `💸 支出/费用登记 <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">${displayTitle}</span>`;
+            
             const incTbody = document.getElementById('table-income');
-            incTbody.innerHTML = '';
             const incData = dataStore.income.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
-            if(incData.length === 0) incTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
-            incData.forEach(item => {
-                const statusTag = item.status === '已到账' ? 'tag-status-on' : 'tag-status-off';
-                incTbody.innerHTML += `<tr>
-                    <td>${item.date}</td>
-                    <td style="font-weight:600;">${getProjectById(item.projectId).name}</td>
-                    <td><span class="tag ${statusTag}">${item.status}</span></td>
-                    <td>${getAmountHtml(item, true)}</td>
-                    <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
-                    <td>
-                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editProject('${stat.id}')">编辑</button>
-                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteProject('${stat.id}')">删除</button>
-                    </td>
-                </tr>`;
-            });
+            
+            let incHtml = ''; // 性能优化
+            if(incData.length === 0) {
+                incHtml = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
+            } else {
+                incData.forEach(item => {
+                    const statusTag = item.status === '已到账' ? 'tag-status-on' : 'tag-status-off';
+                    incHtml += `<tr>
+                        <td>${item.date}</td>
+                        <td style="font-weight:600;">${getProjectById(item.projectId).name}</td>
+                        <td><span class="tag ${statusTag}">${item.status}</span></td>
+                        <td>${getAmountHtml(item, true)}</td>
+                        <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
+                        <td>
+                            <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editIncome('${item.id}')">编辑</button>
+                            <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            incTbody.innerHTML = incHtml;
 
             const expTbody = document.getElementById('table-expense');
-            expTbody.innerHTML = '';
             const expData = dataStore.expense.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
-            if(expData.length === 0) expTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
-            expData.forEach(item => {
-                const expStatus = item.status || '已支付';
-                const statusStyle = expStatus === '已支付'
-                    ? 'background:#dcfce7; color:#166534; border:1px solid #bbf7d0;'
-                    : 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;';
+            
+            let expHtml = ''; // 性能优化
+            if(expData.length === 0) {
+                expHtml = `<tr><td colspan="7" style="text-align:center;color:#999;">无记录</td></tr>`;
+            } else {
+                expData.forEach(item => {
+                    const expStatus = item.status || '已支付';
+                    const statusStyle = expStatus === '已支付'
+                        ? 'background:#dcfce7; color:#166534; border:1px solid #bbf7d0;'
+                        : 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;';
 
-                const typeHtml = item.projectId === 'ADMIN'
-                    ? `<span class="tag tag-admin">管理费用</span>`
-                    : `<span class="tag tag-project">项目成本</span><div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">${getProjectById(item.projectId).name}</div>`;
+                    const typeHtml = item.projectId === 'ADMIN'
+                        ? `<span class="tag tag-admin">管理费用</span>`
+                        : `<span class="tag tag-project">项目成本</span><div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">${getProjectById(item.projectId).name}</div>`;
 
-                expTbody.innerHTML += `<tr>
-                    <td style="font-size:0.82rem; color:var(--text-muted); white-space:nowrap;">${item.date}</td>
-                    <td>${typeHtml}</td>
-                    <td style="font-size:0.85rem; color:var(--text-main);">${item.category}</td>
-                    <td><span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:600; white-space:nowrap; ${statusStyle}">${expStatus}</span></td>
-                    <td>${getAmountHtml(item, false)}</td>
-                    <td style="font-size:0.78rem; color:var(--text-muted);">${item.remark || '-'}</td>
-                    <td>
-                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editExpense('${item.id}')">编辑</button>
-                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button>
-                    </td>
-                </tr>`;
-            });
-      }
+                    expHtml += `<tr>
+                        <td style="font-size:0.82rem; color:var(--text-muted); white-space:nowrap;">${item.date}</td>
+                        <td>${typeHtml}</td>
+                        <td style="font-size:0.85rem; color:var(--text-main);">${item.category}</td>
+                        <td><span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:600; white-space:nowrap; ${statusStyle}">${expStatus}</span></td>
+                        <td>${getAmountHtml(item, false)}</td>
+                        <td style="font-size:0.78rem; color:var(--text-muted);">${item.remark || '-'}</td>
+                        <td>
+                            <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editExpense('${item.id}')">编辑</button>
+                            <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            expTbody.innerHTML = expHtml;
+        }
         
         function renderAnnualDashboard() {
             const year = document.getElementById('annual-year').value;
