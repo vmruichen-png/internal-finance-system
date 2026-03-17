@@ -1285,9 +1285,12 @@
 
         function renderLeaderboard() {
             const tbody = document.getElementById('table-leaderboard');
-            tbody.innerHTML = '';
-            if (dataStore.projects.length === 0) return tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无数据</td></tr>`;
             
+            if (dataStore.projects.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无数据</td></tr>`;
+                return;
+            }
+
             const projectStats = dataStore.projects.map(p => {
                 let pReceived = 0, pReceivable = 0, pPaidCost = 0, pTotalCost = 0;
                 dataStore.income.forEach(inc => { 
@@ -1303,9 +1306,11 @@
                         if ((exp.status || '已支付') === '已支付') pPaidCost += val; 
                     }
                 });
-                // 修改：排行榜真实毛利 = 已到账收入 - 已支付成本
                 return { ...p, pReceived, pReceivable, pTotalCost, pPaidCost, actualGrossProfit: pReceived - pPaidCost };
             }).sort((a, b) => b.actualGrossProfit - a.actualGrossProfit);
+
+            // 【优化点】：先在内存中拼接好所有HTML，不要在循环里频繁操作DOM
+            let htmlContent = '';
 
             projectStats.forEach(stat => {
                 const gpColor = stat.actualGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
@@ -1318,7 +1323,7 @@
                 const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1; border-radius:20px;">${stat.orderType}</span>` : '';
                 const pendingCost = stat.pTotalCost > stat.pPaidCost ? stat.pTotalCost - stat.pPaidCost : 0;
 
-                tbody.innerHTML += `<tr>
+                htmlContent += `<tr>
                     <td>
                         <div style="font-weight:600; font-size:0.875rem; color:var(--text-main);">${stat.name}</div>
                         <div style="margin-top:5px; display:flex; gap:4px; flex-wrap:wrap;">${typeTag}<span class="tag ${statusColor}">${stat.orderStatus || '进行中'}</span></div>
@@ -1346,6 +1351,9 @@
                     </td>
                 </tr>`;
             });
+
+            // 循环结束后一次性渲染到页面，解决卡顿
+            tbody.innerHTML = htmlContent;
         }
 
         function renderOverview() {
