@@ -641,7 +641,21 @@
                         <option value="已完成">已完成</option>
                     </select>
                 </div>
-                <div class="form-group"><label>合同金额 (原币)</label><input type="number" id="edit-prj-amount" class="form-control" step="0.01" min="0" required></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group"><label>币种</label>
+                        <select id="edit-prj-currency" class="form-control" required onchange="toggleEditProjectRate()">
+                            <option value="CNY">CNY - 人民币</option>
+                            <option value="USD">USD - 美元</option>
+                            <option value="EUR">EUR - 欧元</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>合同金额 (原币)</label><input type="number" id="edit-prj-amount" class="form-control" step="0.01" min="0" required oninput="calculateEditProjectPreview()"></div>
+                </div>
+                <div class="form-group" id="wrap-edit-prj-rate" style="display:none;">
+                    <label style="color:#f43f5e;">银行汇率 (非CNY必填)</label>
+                    <input type="number" id="edit-prj-rate" class="form-control" step="0.0001" min="0.0001" value="1.0000" oninput="calculateEditProjectPreview()">
+                </div>
+                <div class="form-group calc-preview">👉 折算人民币金额：<span id="edit-prj-preview" class="text-profit">¥ 0.00</span></div>
                 <button type="submit" class="btn-submit btn-primary" style="margin-top: 15px; padding: 12px;">保存修改并同步</button>
             </form>
         </div>
