@@ -1290,37 +1290,42 @@
 
             projectStats.forEach(stat => {
                 const gpColor = stat.actualGrossProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+                const gpBg   = stat.actualGrossProfit < 0 ? '#fff1f2' : '#f0fdf4';
                 const cnyContractValue = (stat.contractAmount || 0) * (stat.exchangeRate || 1);
                 
                 let statusColor = 'tag-status-on'; 
                 if(stat.orderStatus === '已完成') statusColor = 'tag-admin'; 
                 
-                const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${stat.orderType}</span>` : '';
+                const typeTag = stat.orderType ? `<span class="tag" style="background:#e0f2fe; color:#0369a1; border-radius:20px;">${stat.orderType}</span>` : '';
+                const pendingCost = stat.pTotalCost > stat.pPaidCost ? stat.pTotalCost - stat.pPaidCost : 0;
 
                 tbody.innerHTML += `<tr>
                     <td>
-                        <div style="font-weight:600;">${stat.name}</div>
-                        <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">${typeTag}<span class="tag ${statusColor}">${stat.orderStatus || '进行中'}</span></div>
-                    </td>
-                    <td style="color:var(--text-muted);">
-                        <div>${stat.client}</div>
-                        <div style="margin-top:4px; font-size:0.75rem; color:#8b5cf6;">👤 ${stat.manager || '未指定'}</div>
+                        <div style="font-weight:600; font-size:0.875rem; color:var(--text-main);">${stat.name}</div>
+                        <div style="margin-top:5px; display:flex; gap:4px; flex-wrap:wrap;">${typeTag}<span class="tag ${statusColor}">${stat.orderStatus || '进行中'}</span></div>
                     </td>
                     <td>
-                        <div style="color:var(--text-main); font-weight:600;">¥ ${formatMoney(cnyContractValue)}</div>
-                        ${stat.currency && stat.currency !== 'CNY' ? `<div style="font-size:0.75rem; color:var(--text-muted);">原币: ${stat.contractAmount} ${stat.currency}</div>` : ''}
+                        <div style="font-size:0.875rem; color:var(--text-main);">${stat.client}</div>
+                        <div style="margin-top:3px; font-size:0.75rem; color:var(--admin-color);">↳ ${stat.manager || '未指定'}</div>
                     </td>
-                    <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(stat.pReceived)}</td>
-                    <td style="color:#f59e0b;">¥ ${formatMoney(stat.pReceivable)}</td>
-                    <td style="color:var(--project-color);">
-                        ¥ ${formatMoney(stat.pPaidCost)}
-                        ${stat.pTotalCost > stat.pPaidCost ? `<div style="font-size:0.7rem; color:#f59e0b; margin-top:2px;">+应付 ¥${formatMoney(stat.pTotalCost - stat.pPaidCost)}</div>` : ''}
-                    </td>
-                    <td style="font-weight:700; color:${gpColor};">¥ ${formatMoney(stat.actualGrossProfit)}</td>
                     <td>
-                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-bottom:8px; font-size:0.8rem; border:none; cursor:pointer;" onclick="editProject('${stat.id}')">✏️ 编辑</button>
-                        <br>
-                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0; font-size:0.8rem; border:none; cursor:pointer;" onclick="deleteProject('${stat.id}')">❌ 删除</button>
+                        <div style="font-weight:600; font-size:0.875rem;">¥ ${formatMoney(cnyContractValue)}</div>
+                        ${stat.currency && stat.currency !== 'CNY' ? `<div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">${stat.contractAmount} ${stat.currency}</div>` : ''}
+                    </td>
+                    <td style="color:var(--income-color); font-weight:600; font-size:0.875rem;">¥ ${formatMoney(stat.pReceived)}</td>
+                    <td style="color:#d97706; font-weight:500; font-size:0.875rem;">¥ ${formatMoney(stat.pReceivable)}</td>
+                    <td>
+                        <div style="font-weight:500; font-size:0.875rem; color:var(--project-color);">¥ ${formatMoney(stat.pPaidCost)}</div>
+                        ${pendingCost > 0 ? `<div style="margin-top:3px; display:inline-block; font-size:0.7rem; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; border-radius:20px; padding:1px 7px;">+待付 ¥${formatMoney(pendingCost)}</div>` : ''}
+                    </td>
+                    <td>
+                        <div style="display:inline-block; background:${gpBg}; color:${gpColor}; font-weight:700; font-size:0.875rem; padding:5px 10px; border-radius:8px;">¥ ${formatMoney(stat.actualGrossProfit)}</div>
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:7px; border:1px solid #bfdbfe; background:#eff6ff; color:var(--profit-color); font-size:0.78rem; font-weight:600; cursor:pointer;" onclick="editProject('${stat.id}')">✏️ 编辑</button>
+                            <button style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:7px; border:1px solid #fecdd3; background:#fff1f2; color:var(--expense-color); font-size:0.78rem; font-weight:600; cursor:pointer;" onclick="deleteProject('${stat.id}')">删除</button>
+                        </div>
                     </td>
                 </tr>`;
             });
