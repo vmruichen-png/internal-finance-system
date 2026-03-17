@@ -282,10 +282,20 @@
     .btn-expense { background-color: var(--expense-color); }
     .full-span { grid-column: 1 / -1; }
 
-    /* ================= 表格 ================= */
-    .table-wrapper { max-height: 600px; overflow-y: auto; }
+   /* ================= 表格 ================= */
+    .table-wrapper { 
+        max-height: 600px; 
+        overflow-y: auto; 
+        overflow-x: auto; /* 👇新增：如果表格太宽，允许底部出现横向滚动条 */
+    }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 0.85rem; 
+        text-align: left; 
+        white-space: nowrap; /* 👇核心魔法：强制表格里的文字和数字一行显示，绝对不许折行挤压！ */
+    }
 
     th {
         position: sticky;
