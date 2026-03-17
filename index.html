@@ -1986,14 +1986,15 @@ function toggleSupplier(trClass, iconElement) {
             const supplier = document.getElementById('exp-supplier').value;
 
             // 【新增：智能抵扣应付逻辑】
-            if (status === '已支付') {
-                // 寻找该项目下，同科目、同币种的“应付”账单
-                let targetPayable = dataStore.expense.find(exp => 
-                    exp.projectId === projectId && 
-                    exp.status === '应付' && 
-                    exp.currency === currency &&
-                    exp.category === category
-                );
+        if (status === '已支付') {
+            // 寻找该项目下，同科目、同币种、且【同供应商】的“应付”账单
+            let targetPayable = dataStore.expense.find(exp => 
+                exp.projectId === projectId && 
+                exp.status === '应付' && 
+                exp.currency === currency &&
+                exp.category === category &&
+                (exp.supplier || '').trim() === (supplier || '').trim()
+            );
                 
                 if (targetPayable) {
                     // 自动减去本次支付的金额
