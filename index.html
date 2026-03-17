@@ -992,7 +992,9 @@
                 dataStore.projects[pIndex].client = cName;
                 dataStore.projects[pIndex].manager = mName;
                 dataStore.projects[pIndex].orderStatus = document.getElementById('edit-prj-status').value;
+                dataStore.projects[pIndex].currency = document.getElementById('edit-prj-currency').value;
                 dataStore.projects[pIndex].contractAmount = parseFloat(document.getElementById('edit-prj-amount').value);
+                dataStore.projects[pIndex].exchangeRate = parseFloat(document.getElementById('edit-prj-rate').value) || 1.0000;
                 
                 await saveData();
                 closeEditModal();
