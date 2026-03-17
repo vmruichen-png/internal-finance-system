@@ -1420,22 +1420,27 @@
             const expData = dataStore.expense.filter(item => isSelectedMonth(item.date)).sort((a,b) => new Date(b.date) - new Date(a.date));
             if(expData.length === 0) expTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">无记录</td></tr>`;
             expData.forEach(item => {
-                const expStatus = item.status || '已支付'; // 兼容历史数据
-                const statusTag = expStatus === '已支付' ? 'tag-status-on' : 'tag-status-off';
-                
-                const typeHtml = item.projectId === 'ADMIN' ? 
-                    `<span class="tag tag-admin">管理费用</span>` : 
-                    `<span class="tag tag-project" style="margin-bottom:4px;">项目成本</span><br><span style="font-size:0.75rem;">${getProjectById(item.projectId).name}</span>`;
+                const expStatus = item.status || '已支付';
+                const statusStyle = expStatus === '已支付'
+                    ? 'background:#dcfce7; color:#166534; border:1px solid #bbf7d0;'
+                    : 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;';
+
+                const typeHtml = item.projectId === 'ADMIN'
+                    ? `<span class="tag tag-admin">管理费用</span>`
+                    : `<span class="tag tag-project">项目成本</span><div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">${getProjectById(item.projectId).name}</div>`;
+
                 expTbody.innerHTML += `<tr>
-                    <td>${item.date}</td>
+                    <td style="font-size:0.82rem; color:var(--text-muted); white-space:nowrap;">${item.date}</td>
                     <td>${typeHtml}</td>
-                    <td>${item.category}</td>
-                    <td><span class="tag ${statusTag}">${expStatus}</span></td>
+                    <td style="font-size:0.85rem; color:var(--text-main);">${item.category}</td>
+                    <td><span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:600; white-space:nowrap; ${statusStyle}">${expStatus}</span></td>
                     <td>${getAmountHtml(item, false)}</td>
-                    <td style="color:#4b5563; font-size:0.75rem;">${item.remark || '-'}</td>
+                    <td style="font-size:0.78rem; color:var(--text-muted);">${item.remark || '-'}</td>
                     <td>
-                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editExpense('${item.id}')">编辑</button>
-                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button style="padding:4px 10px; border-radius:7px; border:1px solid #bfdbfe; background:#eff6ff; color:var(--profit-color); font-size:0.78rem; font-weight:600; cursor:pointer;" onclick="editExpense('${item.id}')">编辑</button>
+                            <button style="padding:4px 10px; border-radius:7px; border:1px solid #fecdd3; background:#fff1f2; color:var(--expense-color); font-size:0.78rem; font-weight:600; cursor:pointer;" onclick="deleteRecord('expense', '${item.id}')">删除</button>
+                        </div>
                     </td>
                 </tr>`;
             });
