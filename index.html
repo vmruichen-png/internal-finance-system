@@ -1779,6 +1779,12 @@
                                 ]),
                                 borderRadius: [4, 4, 0, 0]
                             },
+                            // 👇 新增：格式化数量的提示框
+                            tooltip: {
+                                valueFormatter: function (value) {
+                                    return value + ' 个';
+                                }
+                            },
                             data: countsData
                         },
                         {
@@ -1793,6 +1799,12 @@
                                     { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
                                     { offset: 1, color: 'rgba(16, 185, 129, 0)' }
                                 ])
+                            },
+                            // 👇 新增：格式化金额的提示框（调用自带的 formatMoney 函数）
+                            tooltip: {
+                                valueFormatter: function (value) {
+                                    return '¥ ' + formatMoney(value);
+                                }
                             },
                             data: amountsData
                         }
