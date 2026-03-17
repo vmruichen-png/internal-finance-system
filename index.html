@@ -1078,8 +1078,7 @@
         }
 
          function clearMonthFilter() {
-            document.getElementById('global-month').value = '';
-            updateMonthlyDashboard();
+            setMonthMode('all');
         }
         
         function renderTables() {
