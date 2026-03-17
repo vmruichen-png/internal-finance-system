@@ -1527,6 +1527,48 @@
             }
             expTbody.innerHTML = expHtml;
         }
+
+// ================= 【新增代码】渲染指定月份的项目明细 =================
+        function showMonthlyProjects(monthIdx, year) {
+            const detailContainer = document.getElementById('monthly-project-details');
+            const titleEl = document.getElementById('monthly-detail-title');
+            const tbody = document.getElementById('table-monthly-details');
+
+            if(!detailContainer || !tbody) return;
+
+            // 显示面板，并更新标题
+            detailContainer.style.display = 'block';
+            titleEl.innerHTML = `📅 <strong>${year}年 ${monthIdx + 1}月</strong> 立项明细 <span style="font-size:0.75rem; color:#999; font-weight:normal; margin-left:10px;">(按金额降序)</span>`;
+            tbody.innerHTML = '';
+
+            // 筛选出该月份的项目
+            const projectsInMonth = dataStore.projects.filter(p => {
+                if (!p.startDate || !p.startDate.startsWith(year)) return false;
+                const parts = p.startDate.split('-');
+                return parts.length >= 2 && parseInt(parts[1], 10) - 1 === monthIdx;
+            });
+
+            if (projectsInMonth.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">该月无立项数据</td></tr>';
+                return;
+            }
+
+            // 按照合同金额从大到小排序，并渲染表格
+            projectsInMonth.sort((a, b) => (b.contractAmount * (b.exchangeRate||1)) - (a.contractAmount * (a.exchangeRate||1))).forEach(p => {
+                const cnyVal = (p.contractAmount || 0) * (p.exchangeRate || 1);
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-main);">📁 ${p.name}</td>
+                        <td style="color:var(--text-muted);">${p.client || '-'}</td>
+                        <td style="color:var(--text-muted);">👤 ${p.manager || '-'}</td>
+                        <td style="color:var(--income-color); font-weight:600;">¥ ${formatMoney(cnyVal)}</td>
+                    </tr>
+                `;
+            });
+            
+            // 贴心小优化：点击后让页面平滑滚动到明细区
+            detailContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
         
         function renderAnnualDashboard() {
             const year = document.getElementById('annual-year').value;
