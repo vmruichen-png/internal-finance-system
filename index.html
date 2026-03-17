@@ -1733,6 +1733,106 @@
                     suppTbody.innerHTML += `<tr style="font-weight: 600;"><td style="text-align: center;"><span class="toggle-icon" onclick="toggleSupplier('${trId}', this)">▶</span></td><td>${s.name}</td><td style="color: var(--text-main);">¥ ${formatMoney(s.total)}</td><td style="color: var(--income-color);">¥ ${formatMoney(s.paid)}</td><td style="color: var(--expense-color);">¥ ${formatMoney(s.payable)}</td><td>${payableRatio.toFixed(2)}%</td></tr>`;
                     for (const[pName, pData] of Object.entries(s.projects)) {
                         suppTbody.innerHTML += `<tr class="sub-row ${trId}"><td></td><td style="color: var(--text-muted); padding-left: 10px;">↳ ${pName}</td><td style="color: var(--text-muted);">¥ ${formatMoney(pData.paid + pData.payable)}</td><td style="color: var(--income-color); font-size: 0.75rem;">已付: ¥ ${formatMoney(pData.paid)}</td><td style="color: #f59e0b; font-size: 0.75rem;">未付: ¥ ${formatMoney(pData.payable)}</td><td></td></tr>`;
+                   // ================= 【新增代码】渲染月度项目趋势双轴图 =================
+            const chartDom = document.getElementById('chart-monthly-projects');
+            if (chartDom && typeof echarts !== 'undefined') {
+                // 1. 初始化 12 个月的数据容器
+                const monthlyStats = new Array(12).fill(0).map(() => ({ count: 0, amount: 0 }));
+
+                // 2. 遍历所有项目，按立项月份归类
+                dataStore.projects.forEach(p => {
+                    if (p.startDate && p.startDate.startsWith(year)) {
+                        const monthParts = p.startDate.split('-');
+                        if (monthParts.length >= 2) {
+                            const monthIdx = parseInt(monthParts[1], 10) - 1; // 0-11
+                            if (monthIdx >= 0 && monthIdx <= 11) {
+                                monthlyStats[monthIdx].count += 1;
+                                // 统一折算成人民币计算合同总额
+                                monthlyStats[monthIdx].amount += (p.contractAmount || 0) * (p.exchangeRate || 1);
+                            }
+                        }
+                    }
+                });
+
+                // 3. 拆分图表需要的数组
+                const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+                const countsData = monthlyStats.map(m => m.count);
+                const amountsData = monthlyStats.map(m => m.amount);
+
+                // 4. 配置并绘制 ECharts
+                const myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'cross', crossStyle: { color: '#999' } }
+                    },
+                    legend: { data: ['立项数量 (个)', '合同总额 (CNY)'] },
+                    grid: { left: '2%', right: '2%', bottom: '5%', containLabel: true },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            data: months,
+                            axisPointer: { type: 'shadow' }
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: '数量 (个)',
+                            minInterval: 1, // 确保项目数量是整数
+                            axisLabel: { color: '#64748b' },
+                            splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } }
+                        },
+                        {
+                            type: 'value',
+                            name: '金额 (¥)',
+                            axisLabel: { 
+                                color: '#10b981',
+                                formatter: function (value) {
+                                    // 金额太大时缩写为万
+                                    return value >= 10000 ? (value / 10000) + ' 万' : value;
+                                }
+                            },
+                            splitLine: { show: false } // 隐藏右侧Y轴的网格线，保持界面干净
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '立项数量 (个)',
+                            type: 'bar',
+                            barWidth: '35%',
+                            itemStyle: { 
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: '#60a5fa' }, // 浅蓝
+                                    { offset: 1, color: '#3b82f6' }  // 深蓝
+                                ]),
+                                borderRadius: [4, 4, 0, 0]
+                            },
+                            data: countsData
+                        },
+                        {
+                            name: '合同总额 (CNY)',
+                            type: 'line',
+                            yAxisIndex: 1, // 绑定到右侧金额 Y 轴
+                            smooth: true,  // 平滑曲线
+                            symbolSize: 8,
+                            itemStyle: { color: '#10b981' }, // 绿色
+                            areaStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+                                    { offset: 1, color: 'rgba(16, 185, 129, 0)' }
+                                ])
+                            },
+                            data: amountsData
+                        }
+                    ]
+                };
+                myChart.setOption(option);
+
+                // 监听窗口大小变化，让图表自适应缩放
+                window.addEventListener('resize', () => myChart.resize());
+            }
+            // ================= 【新增结束】 =================
                     }
                 });
             }
