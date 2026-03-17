@@ -1928,21 +1928,50 @@ function toggleSupplier(trClass, iconElement) {
 
         document.getElementById('form-income').addEventListener('submit', async function(e) {
             e.preventDefault();
-            if(!document.getElementById('inc-project').value) return alert('请选择项目！');
+            const projectId = document.getElementById('inc-project').value;
+            if(!projectId) return alert('请选择项目！');
+
+            const status = document.getElementById('inc-status').value;
+            const currency = document.getElementById('inc-currency').value;
+            const amount = parseFloat(document.getElementById('inc-amount').value);
+            const rate = parseFloat(document.getElementById('inc-rate').value);
+
+            // 【新增：智能抵扣应收逻辑】
+            if (status === '已到账') {
+                // 寻找该项目下，同币种的“应收”账单
+                let targetReceivable = dataStore.income.find(inc => 
+                    inc.projectId === projectId && 
+                    inc.status === '应收' && 
+                    inc.currency === currency
+                );
+                
+                if (targetReceivable) {
+                    // 自动减去本次到账的金额
+                    targetReceivable.amount -= amount;
+                    // 如果应收金额被扣完（小于等于0），自动删掉这条应收记录
+                    if (targetReceivable.amount <= 0) {
+                        dataStore.income = dataStore.income.filter(inc => inc.id !== targetReceivable.id);
+                    }
+                }
+            }
+
+            // 正常录入本次的到账记录
             dataStore.income.push({
                 id: 'INC_' + Date.now(),
                 date: document.getElementById('inc-date').value, 
-                projectId: document.getElementById('inc-project').value,
-                currency: document.getElementById('inc-currency').value, 
-                amount: parseFloat(document.getElementById('inc-amount').value),
-                rate: parseFloat(document.getElementById('inc-rate').value), 
-                status: document.getElementById('inc-status').value, 
+                projectId: projectId,
+                currency: currency, 
+                amount: amount,
+                rate: rate, 
+                status: status, 
                 remark: document.getElementById('inc-remark').value
             });
+             
             await saveData();
             document.getElementById('inc-amount').value = ''; 
             document.getElementById('inc-remark').value = ''; 
             document.getElementById('inc-currency').value = 'CNY';
+            document.getElementById('inc-status').value = '已到账'; 
             toggleCurrencyRate('inc');
         });
 
