@@ -1435,10 +1435,8 @@
                     <td>${getAmountHtml(item, false)}</td>
                     <td style="font-size:0.78rem; color:var(--text-muted);">${item.remark || '-'}</td>
                     <td>
-                        <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
-                            <button style="padding:4px 10px; border-radius:7px; border:1px solid #bfdbfe; background:#eff6ff; color:var(--profit-color); font-size:0.78rem; font-weight:600; cursor:pointer; width:100%;" onclick="editExpense('${item.id}')">编辑</button>
-                            <button style="padding:4px 10px; border-radius:7px; border:1px solid #fecdd3; background:#fff1f2; color:var(--expense-color); font-size:0.78rem; font-weight:600; cursor:pointer; width:100%;" onclick="deleteRecord('expense', '${item.id}')">删除</button>
-                        </div>
+                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editExpense('${item.id}')">编辑</button>
+                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('expense', '${item.id}')">删除</button>
                     </td>
                 </tr>`;
             });
