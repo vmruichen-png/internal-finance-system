@@ -933,9 +933,33 @@
             document.getElementById('edit-prj-client').value = p.client;
             document.getElementById('edit-prj-manager').value = p.manager || '';
             document.getElementById('edit-prj-status').value = p.orderStatus || '进行中';
+            document.getElementById('edit-prj-currency').value = p.currency || 'CNY';
             document.getElementById('edit-prj-amount').value = p.contractAmount;
+            document.getElementById('edit-prj-rate').value = p.exchangeRate || 1.0000;
+            
+            toggleEditProjectRate();
+            calculateEditProjectPreview();
             
             document.getElementById('editModal').classList.add('show');
+        }
+
+        function toggleEditProjectRate() {
+            const currency = document.getElementById('edit-prj-currency').value;
+            const rateWrap = document.getElementById('wrap-edit-prj-rate');
+            const rateInput = document.getElementById('edit-prj-rate');
+            if (currency === 'CNY') {
+                rateWrap.style.display = 'none';
+                rateInput.value = '1.0000';
+            } else {
+                rateWrap.style.display = 'block';
+            }
+            calculateEditProjectPreview();
+        }
+
+        function calculateEditProjectPreview() {
+            const amount = parseFloat(document.getElementById('edit-prj-amount').value) || 0;
+            const rate = parseFloat(document.getElementById('edit-prj-rate').value) || 1;
+            document.getElementById('edit-prj-preview').innerText = `¥ ${formatMoney(amount * rate)}`;
         }
 
         function closeEditModal() {
