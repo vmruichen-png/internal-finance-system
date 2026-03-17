@@ -1341,8 +1341,8 @@
                         <div style="display:inline-block; background:${gpBg}; color:${gpColor}; font-weight:700; font-size:0.875rem; padding:5px 10px; border-radius:8px;">¥ ${formatMoney(stat.actualGrossProfit)}</div>
                     </td>
                     <td>
-                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editIncome('${item.id}')">编辑</button>
-                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteRecord('income', '${item.id}')">删除</button>
+                        <button class="btn-submit" style="background:none; color:var(--profit-color); padding:0; margin-right:8px; font-weight:600;" onclick="editProject('${stat.id}')">编辑</button>
+                        <button class="btn-submit" style="background:none; color:var(--expense-color); padding:0;" onclick="deleteProject('${stat.id}')">删除</button>
                     </td>
                 </tr>`;
             });
