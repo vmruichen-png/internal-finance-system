@@ -1870,6 +1870,16 @@
                 };
                 myChart.setOption(option);
                 myChart.resize();
+                // 👇 新增：给图表绑定点击事件 👇
+                myChart.off('click'); // 防止重复绑定
+                myChart.on('click', function (params) {
+                    // params.dataIndex 是点击的月份索引 (0代表1月, 2代表3月)
+                    showMonthlyProjects(params.dataIndex, year);
+                });
+                
+                // 每次切换年份重新渲染时，先把底部的明细区藏起来
+                const detailBox = document.getElementById('monthly-project-details');
+                if(detailBox) detailBox.style.display = 'none';
                 window.addEventListener('resize', () => myChart.resize());
             }
         }
