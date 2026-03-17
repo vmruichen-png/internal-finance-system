@@ -1526,8 +1526,7 @@
             if(!year) return;
             
             let annTotalIncome = 0, annReceived = 0, annProjectCost = 0, annAdminCost = 0;
-            const adminMap = {}; // 用于管理费科目分组
-            // 【关键修改】初始化12个月的数组
+            const adminMap = {}; 
             const adminMonthly = new Array(12).fill(0); 
             
             const yearIncome = dataStore.income.filter(item => item.date.startsWith(year));
@@ -1536,18 +1535,16 @@
             // 1. 统计收入
             yearIncome.forEach(item => { 
                 const val = item.amount * item.rate; 
-                annTotalIncome += val; 
+                annTotalIncome += val;
                 if(item.status === '已到账') annReceived += val; 
             });
 
-            // ================= 开头 1：从这里开始替换 =================
             // 2. 统计支出
             yearExpense.forEach(item => { 
                 const val = item.amount * item.rate;
                 if(item.projectId === 'ADMIN') {
                     // --- 管理费逻辑 ---
                     annAdminCost += val;
-                    // A. 按科目分组
                     if(!adminMap[item.category]) {
                         adminMap[item.category] = { total: 0, count: 0, items: [] };
                     }
@@ -1555,23 +1552,21 @@
                     adminMap[item.category].count += 1;
                     adminMap[item.category].items.push({ date: item.date, val: val, remark: item.remark });
 
-                    // B. 【修改处 1】：纯字符串分割，绕开所有防火墙拦截，稳定提取月份
                     if(item.date && item.date.length >= 7) {
                         const parts = item.date.split('-'); 
                         if(parts.length >= 2) {
-                            const monthIdx = parseInt(parts[1], 10) - 1; // 把 "03" 转为数字 2 (三月索引)
+                            const monthIdx = parseInt(parts[1], 10) - 1;
                             if(monthIdx >= 0 && monthIdx <= 11) {
                                 adminMonthly[monthIdx] += val;
                             }
                         }
                     }
-
                 } else {
                     // --- 项目成本逻辑 ---
                     annProjectCost += val;
                 }
             });
-            
+
             const annNetProfit = annTotalIncome - annProjectCost - annAdminCost;
             const annNetMargin = annTotalIncome > 0 ? (annNetProfit / annTotalIncome) * 100 : 0;
             const projectGrossProfit = annTotalIncome - annProjectCost;
@@ -1583,13 +1578,12 @@
             document.getElementById('ann-admin-cost').innerText = `¥ ${formatMoney(annAdminCost)}`;
             
             const netProfitEl = document.getElementById('ann-net-profit'); 
-            netProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`; 
+            netProfitEl.innerText = `¥ ${formatMoney(annNetProfit)}`;
             netProfitEl.style.color = annNetProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
             
             document.getElementById('ann-net-margin').innerText = `${annNetMargin.toFixed(2)}%`; 
             document.getElementById('ann-net-margin').style.color = annNetMargin < 0 ? 'var(--expense-color)' : 'var(--text-main)';
 
-            // --- 渲染管理费概览 ---
             const summaryProjProfitEl = document.getElementById('summary-proj-profit');
             if(summaryProjProfitEl) {
                 summaryProjProfitEl.innerText = `¥ ${formatMoney(projectGrossProfit)}`;
@@ -1621,7 +1615,6 @@
                                 <td><div style="background:#e5e7eb; height:6px; border-radius:3px; width:100%;"><div style="background:var(--admin-color); height:100%; border-radius:3px; width:${ratio}%"></div></div></td>
                             </tr>
                         `;
-                        // 详细行
                         data.items.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(detail => {
                             adminTbody.innerHTML += `<tr class="sub-row ${trId}"><td></td><td style="color: var(--text-muted); font-size: 0.8rem; padding-left: 20px;">📅 ${detail.date}</td><td style="color: var(--text-muted); font-size: 0.8rem;">¥ ${formatMoney(detail.val)}</td><td colspan="3" style="color: var(--text-muted); font-size: 0.8rem;">${detail.remark || '-'}</td></tr>`;
                         });
@@ -1629,20 +1622,14 @@
                 }
             }
 
-            // ================= 1. 柱状图 (修复后) =================
+            // ================= 1. 柱状图 =================
             const chartBarEl = document.getElementById('chart-monthly-admin');
             if(chartBarEl) {
                 chartBarEl.innerHTML = '';
-                // 找出最大值，确保除数不为0
                 const maxVal = Math.max(...adminMonthly, 1);
                 adminMonthly.forEach((val, idx) => {
-                    // 计算高度百分比
                     let heightPct = (val / maxVal) * 100;
-                    // 【视觉优化】如果有值但太小(小于2%)，强制显示为2%，否则看不见
                     if(val > 0 && heightPct < 2) heightPct = 2;
-                    
-                    // 【修改处 2】：给 bar-col 增加 style="height: 100%; justify-content: flex-end;"
-                    // 彻底解决容器高度为0导致柱子看不见的布局 bug
                     chartBarEl.innerHTML += `
                         <div class="bar-col" style="height: 100%; justify-content: flex-end;">
                             <div class="bar" style="height: ${val > 0 ? heightPct : 0}%;">
@@ -1653,9 +1640,8 @@
                     `;
                 });
             }
-            // ================= 结尾 2：到这里结束 =================
             
-            // ================= 2. 饼图 (保持不变) =================
+            // ================= 2. 饼图 =================
             const chartPieEl = document.getElementById('chart-category-pie');
             const chartLegendEl = document.getElementById('chart-category-legend');
             
@@ -1664,7 +1650,6 @@
                 let gradientStr = [];
                 let currentPct = 0;
                 let legendHtml = '';
-
                 adminArr.forEach(([cat, data], idx) => {
                     const pct = (data.total / annAdminCost) * 100;
                     const color = colors[idx % colors.length];
@@ -1672,7 +1657,6 @@
                     currentPct += pct;
                     legendHtml += `<div class="legend-item"><div><span class="legend-dot" style="background:${color}"></span>${cat}</div><div style="font-weight:600;">${pct.toFixed(1)}%</div></div>`;
                 });
-
                 chartPieEl.style.background = `conic-gradient(${gradientStr.join(', ')})`;
                 chartLegendEl.innerHTML = legendHtml;
             } else if (chartPieEl) {
@@ -1680,7 +1664,7 @@
                 chartLegendEl.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">暂无数据</div>';
             }
 
-            // ================= 项目排行 (保持不变) =================
+            // ================= 项目排行 =================
             const projTbody = document.getElementById('table-annual-projects');
             projTbody.innerHTML = '';
             
@@ -1704,12 +1688,10 @@
                 });
             }
 
-            // ================= 供应商表格 (已包含之前的修改：排除管理费) =================
+            // ================= 供应商表格 =================
             const supplierMap = {};
             yearExpense.forEach(e => {
-                // 【保持之前的修改】排除管理费
                 if (e.projectId === 'ADMIN') return;
-
                 const supp = e.supplier || '未登记供应商';
                 if (!supplierMap[supp]) { supplierMap[supp] = { name: supp, total: 0, paid: 0, payable: 0, projects: {} }; }
                 const val = e.amount * e.rate;
@@ -1720,26 +1702,28 @@
                 if (!supplierMap[supp].projects[pName]) { supplierMap[supp].projects[pName] = { paid: 0, payable: 0 }; }
                 if (isPaid) { supplierMap[supp].projects[pName].paid += val; } else { supplierMap[supp].projects[pName].payable += val; }
             });
-
+            
             const suppTbody = document.getElementById('table-annual-suppliers');
             suppTbody.innerHTML = '';
             const supplierArr = Object.values(supplierMap).sort((a, b) => b.payable - a.payable);
-            
-            if (supplierArr.length === 0) { suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据 (已排除管理费)</td></tr>`; } 
-            else {
+            if (supplierArr.length === 0) { 
+                suppTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;">本年度暂无供应商数据 (已排除管理费)</td></tr>`;
+            } else {
                 supplierArr.forEach((s, idx) => {
                     const payableRatio = s.total > 0 ? (s.payable / s.total) * 100 : 0;
                     const trId = `supp-${idx}`;
                     suppTbody.innerHTML += `<tr style="font-weight: 600;"><td style="text-align: center;"><span class="toggle-icon" onclick="toggleSupplier('${trId}', this)">▶</span></td><td>${s.name}</td><td style="color: var(--text-main);">¥ ${formatMoney(s.total)}</td><td style="color: var(--income-color);">¥ ${formatMoney(s.paid)}</td><td style="color: var(--expense-color);">¥ ${formatMoney(s.payable)}</td><td>${payableRatio.toFixed(2)}%</td></tr>`;
                     for (const[pName, pData] of Object.entries(s.projects)) {
                         suppTbody.innerHTML += `<tr class="sub-row ${trId}"><td></td><td style="color: var(--text-muted); padding-left: 10px;">↳ ${pName}</td><td style="color: var(--text-muted);">¥ ${formatMoney(pData.paid + pData.payable)}</td><td style="color: var(--income-color); font-size: 0.75rem;">已付: ¥ ${formatMoney(pData.paid)}</td><td style="color: #f59e0b; font-size: 0.75rem;">未付: ¥ ${formatMoney(pData.payable)}</td><td></td></tr>`;
-                   // ================= 【新增代码】渲染月度项目趋势双轴图 =================
+                    }
+                });
+            }
+
+            // ================= 【正确位置的新增代码】渲染月度项目趋势双轴图 =================
             const chartDom = document.getElementById('chart-monthly-projects');
             if (chartDom && typeof echarts !== 'undefined') {
-                // 1. 初始化 12 个月的数据容器
                 const monthlyStats = new Array(12).fill(0).map(() => ({ count: 0, amount: 0 }));
 
-                // 2. 遍历所有项目，按立项月份归类
                 dataStore.projects.forEach(p => {
                     if (p.startDate && p.startDate.startsWith(year)) {
                         const monthParts = p.startDate.split('-');
@@ -1747,19 +1731,16 @@
                             const monthIdx = parseInt(monthParts[1], 10) - 1; // 0-11
                             if (monthIdx >= 0 && monthIdx <= 11) {
                                 monthlyStats[monthIdx].count += 1;
-                                // 统一折算成人民币计算合同总额
                                 monthlyStats[monthIdx].amount += (p.contractAmount || 0) * (p.exchangeRate || 1);
                             }
                         }
                     }
                 });
 
-                // 3. 拆分图表需要的数组
                 const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
                 const countsData = monthlyStats.map(m => m.count);
                 const amountsData = monthlyStats.map(m => m.amount);
 
-                // 4. 配置并绘制 ECharts
                 const myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
                 const option = {
                     tooltip: {
@@ -1779,7 +1760,7 @@
                         {
                             type: 'value',
                             name: '数量 (个)',
-                            minInterval: 1, // 确保项目数量是整数
+                            minInterval: 1, 
                             axisLabel: { color: '#64748b' },
                             splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } }
                         },
@@ -1789,11 +1770,10 @@
                             axisLabel: { 
                                 color: '#10b981',
                                 formatter: function (value) {
-                                    // 金额太大时缩写为万
                                     return value >= 10000 ? (value / 10000) + ' 万' : value;
                                 }
                             },
-                            splitLine: { show: false } // 隐藏右侧Y轴的网格线，保持界面干净
+                            splitLine: { show: false } 
                         }
                     ],
                     series: [
@@ -1803,8 +1783,8 @@
                             barWidth: '35%',
                             itemStyle: { 
                                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                    { offset: 0, color: '#60a5fa' }, // 浅蓝
-                                    { offset: 1, color: '#3b82f6' }  // 深蓝
+                                    { offset: 0, color: '#60a5fa' }, 
+                                    { offset: 1, color: '#3b82f6' }  
                                 ]),
                                 borderRadius: [4, 4, 0, 0]
                             },
@@ -1813,10 +1793,10 @@
                         {
                             name: '合同总额 (CNY)',
                             type: 'line',
-                            yAxisIndex: 1, // 绑定到右侧金额 Y 轴
-                            smooth: true,  // 平滑曲线
+                            yAxisIndex: 1, 
+                            smooth: true,  
                             symbolSize: 8,
-                            itemStyle: { color: '#10b981' }, // 绿色
+                            itemStyle: { color: '#10b981' }, 
                             areaStyle: {
                                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                                     { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
@@ -1828,13 +1808,7 @@
                     ]
                 };
                 myChart.setOption(option);
-
-                // 监听窗口大小变化，让图表自适应缩放
                 window.addEventListener('resize', () => myChart.resize());
-            }
-            // ================= 【新增结束】 =================
-                    }
-                });
             }
         }
 function toggleSupplier(trClass, iconElement) {
