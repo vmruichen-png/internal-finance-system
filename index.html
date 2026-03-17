@@ -228,11 +228,11 @@
     .stat-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
 
     /* ================= 排版与表单 ================= */
-    /* 给左侧保留 420px 的舒适空间，剩下的 1fr 全局给右侧表格 */
-    .projects-layout { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
+    /* 调整左侧为 400px，给输入框保留足够的宽度 */
+    .projects-layout { display: grid; grid-template-columns: 400px 1fr; gap: 20px; }
     
-    /* 给左侧表单加上左右各 30px 的留白空气墙，防止元素贴边 */
-    #form-project { display: grid !important; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 30px !important; }
+    /* 去除过大的内部挤压，只在右侧保留 15px 的安全距离 */
+    #form-project { display: grid !important; grid-template-columns: 1fr 1fr; gap: 15px; padding-right: 15px !important; width: 100%; }
     .management-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .inline-form { display: grid; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
     .grid-1 { grid-template-columns: 1fr; }
