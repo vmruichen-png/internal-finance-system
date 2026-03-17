@@ -227,7 +227,11 @@
     .stat-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
 
     /* ================= 排版与表单 ================= */
-    .projects-layout { display: grid; grid-template-columns: 1fr 3.5fr; gap: 20px; }
+    /* 给左侧保留 420px 的舒适空间，剩下的 1fr 全局给右侧表格 */
+    .projects-layout { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
+    
+    /* 强制左侧表单变为“完美双列排版”，既宽敞又好看 */
+    #form-project { display: grid !important; grid-template-columns: 1fr 1fr; gap: 15px; }
     .management-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .inline-form { display: grid; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
     .grid-1 { grid-template-columns: 1fr; }
