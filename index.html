@@ -2505,16 +2505,22 @@ function toggleSupplier(trClass, iconElement) {
                 currentOverviewProjectId = sidebarData[0].id;
             }
 
-            // 2. 渲染左侧列表
+            // 2. 渲染左侧列表 (已修复：显示项目名称)
             sidebarList.innerHTML = sidebarData.map(p => `
                 <div class="sidebar-item ${p.statusClass} ${p.id === currentOverviewProjectId ? 'active' : ''}" 
                      onclick="selectOverviewProject('${p.id}')">
-                    <span class="status-dot"></span>
-                    <div class="item-name" title="${p.name}">📁 ${p.name}</div>
-                    <div class="item-sub">
-                        <span style="font-weight:600; color: ${p.statusClass === 'item-unpaid' ? 'var(--expense-color)' : (p.statusClass === 'item-partial' ? '#b45309' : 'var(--income-color)')};">${p.statusText}</span>
-                        <span>已收: ¥${formatMoney(p.received)}</span>
+                    
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${p.name}">
+                        📁 ${p.name}
                     </div>
+                    
+                    <div class="item-sub" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                        <span style="font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.5); color: ${p.statusClass === 'item-unpaid' ? 'var(--expense-color)' : (p.statusClass === 'item-partial' ? '#b45309' : 'var(--income-color)')};">
+                            ${p.statusText}
+                        </span>
+                        <span style="color: var(--text-muted);">已收: ¥${formatMoney(p.received)}</span>
+                    </div>
+
                 </div>
             `).join('');
 
