@@ -2524,21 +2524,28 @@ function toggleSupplier(trClass, iconElement) {
                 currentOverviewProjectId = sidebarData[0].id;
             }
 
-            // 2. 渲染左侧列表 (终极精简版：只留名字和已收金额)
+           // 2. 渲染左侧列表 (终极防错 + 智能隐藏金额版)
             sidebarList.innerHTML = sidebarData.map(p => {
+                
+                // 【新增逻辑】如果是未收状态（浅红色），就不生成已收金额的文本
+                let amountHtml = '';
+                if (p.statusClass !== 'item-unpaid') {
+                    // 只有部分收款或已结清，才显示金额
+                    amountHtml = `<div style="text-align: right; font-size: 0.72rem; color: #64748b; margin-top: 6px;">已收: ¥${formatMoney(p.received)}</div>`;
+                }
+
                 return `
                 <div class="sidebar-item ${p.statusClass} ${p.id === currentOverviewProjectId ? 'active' : ''}" 
-                     onclick="selectOverviewProject('${p.id}')">
+                     onclick="selectOverviewProject('${p.id}')"
+                     style="padding: 12px; display: flex; flex-direction: column; justify-content: center; min-height: 56px;">
                     
                     <span class="status-dot"></span>
                     
-                    <div class="item-name" title="${p.name}" style="display: block !important; font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <div class="item-name" title="${p.name}" style="display: block !important; visibility: visible !important; font-size: 0.85rem; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         📁 ${p.name}
                     </div>
                     
-                    <div class="item-sub" style="display: flex; justify-content: flex-end; font-size: 0.75rem; color: #64748b;">
-                        <span>已收: ¥${formatMoney(p.received)}</span>
-                    </div>
+                    ${amountHtml}
 
                 </div>
                 `;
