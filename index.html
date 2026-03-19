@@ -555,13 +555,32 @@
     .item-partial { background: #fffbeb; border-color: #fef3c7; } /* 收一部分：浅黄色 */
     .item-paid { background: #f0fdf4; border-color: #dcfce7; }    /* 完全结清：浅绿色 */
 
-    .item-name { font-size: 0.85rem; font-weight: 600; color: var(--text-main); text-overflow: ellipsis; overflow: hidden; }
-    .item-sub { font-size: 0.72rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+    /* 每一个项目小框卡片内部的排版 */
+    .item-name { 
+        font-size: 0.85rem; 
+        font-weight: 700; /* 名字加粗 */
+        color: var(--text-main); 
+        text-overflow: ellipsis; 
+        overflow: hidden; 
+        white-space: nowrap; /* 强制名字不换行 */
+        margin-bottom: 6px;
+    }
+    
+    .item-sub { 
+        font-size: 0.75rem; 
+        color: var(--text-muted); 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
 
-    /* 折叠后只显示状态小圆点 */
-    .overview-sidebar.collapsed .sidebar-item { padding: 12px 0; align-items: center; }
-    .overview-sidebar.collapsed .item-name, .overview-sidebar.collapsed .item-sub { display: none; }
-    .overview-sidebar.collapsed .status-dot { width: 14px; height: 14px; border-radius: 50%; display: block; }
+    /* 👇 核心修复：折叠后强制隐藏文字内容，加上 !important */
+    .overview-sidebar.collapsed .sidebar-item { padding: 12px 0; justify-content: center; align-items: center; }
+    .overview-sidebar.collapsed .item-name, 
+    .overview-sidebar.collapsed .item-sub { 
+        display: none !important; 
+    }
+    .overview-sidebar.collapsed .status-dot { width: 12px; height: 12px; border-radius: 50%; display: block; flex-shrink: 0; }
     
     .status-dot { display: none; }
     .item-unpaid .status-dot { background: var(--expense-color); }
