@@ -2524,24 +2524,29 @@ function toggleSupplier(trClass, iconElement) {
                 currentOverviewProjectId = sidebarData[0].id;
             }
 
-            // 2. 渲染左侧列表 (已修复：显示项目名称)
-            sidebarList.innerHTML = sidebarData.map(p => `
+            // 2. 渲染左侧列表 (完美修复版)
+            sidebarList.innerHTML = sidebarData.map(p => {
+                // 动态计算标签的颜色
+                const badgeColor = p.statusClass === 'item-unpaid' ? 'var(--expense-color)' : (p.statusClass === 'item-partial' ? '#b45309' : 'var(--income-color)');
+                
+                return `
                 <div class="sidebar-item ${p.statusClass} ${p.id === currentOverviewProjectId ? 'active' : ''}" 
                      onclick="selectOverviewProject('${p.id}')">
                     
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${p.name}">
-                        📁 ${p.name}
-                    </div>
+                    <span class="status-dot"></span>
                     
-                    <div class="item-sub" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
-                        <span style="font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.5); color: ${p.statusClass === 'item-unpaid' ? 'var(--expense-color)' : (p.statusClass === 'item-partial' ? '#b45309' : 'var(--income-color)')};">
+                    <div class="item-name" title="${p.name}">📁 ${p.name}</div>
+                    
+                    <div class="item-sub">
+                        <span style="font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.6); color: ${badgeColor};">
                             ${p.statusText}
                         </span>
-                        <span style="color: var(--text-muted);">已收: ¥${formatMoney(p.received)}</span>
+                        <span>已收: ¥${formatMoney(p.received)}</span>
                     </div>
 
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             // 3. 渲染右侧面板 (复用你原本完美的渲染逻辑)
             renderOverviewDetailCard(currentOverviewProjectId);
