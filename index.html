@@ -2524,24 +2524,22 @@ function toggleSupplier(trClass, iconElement) {
                 currentOverviewProjectId = sidebarData[0].id;
             }
 
-           // 2. 渲染左侧列表 (终极防错 + 智能隐藏金额版)
+           // 2. 渲染左侧列表 (纯净版：完全交由 CSS 控制折叠与显示)
             sidebarList.innerHTML = sidebarData.map(p => {
                 
-                // 【新增逻辑】如果是未收状态（浅红色），就不生成已收金额的文本
+                // 【智能金额区】：未收不显示，其他的加上 class="item-sub" 确保折叠时能被隐藏
                 let amountHtml = '';
                 if (p.statusClass !== 'item-unpaid') {
-                    // 只有部分收款或已结清，才显示金额
-                    amountHtml = `<div style="text-align: right; font-size: 0.72rem; color: #64748b; margin-top: 6px;">已收: ¥${formatMoney(p.received)}</div>`;
+                    amountHtml = `<div class="item-sub" style="justify-content: flex-end;">已收: ¥${formatMoney(p.received)}</div>`;
                 }
 
                 return `
                 <div class="sidebar-item ${p.statusClass} ${p.id === currentOverviewProjectId ? 'active' : ''}" 
-                     onclick="selectOverviewProject('${p.id}')"
-                     style="padding: 12px; display: flex; flex-direction: column; justify-content: center; min-height: 56px;">
+                     onclick="selectOverviewProject('${p.id}')">
                     
                     <span class="status-dot"></span>
                     
-                    <div class="item-name" title="${p.name}" style="display: block !important; visibility: visible !important; font-size: 0.85rem; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <div class="item-name" title="${p.name}">
                         📁 ${p.name}
                     </div>
                     
