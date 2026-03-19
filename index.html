@@ -2524,23 +2524,19 @@ function toggleSupplier(trClass, iconElement) {
                 currentOverviewProjectId = sidebarData[0].id;
             }
 
-            // 2. 渲染左侧列表 (完美修复版)
+            // 2. 渲染左侧列表 (终极精简版：只留名字和已收金额)
             sidebarList.innerHTML = sidebarData.map(p => {
-                // 动态计算标签的颜色
-                const badgeColor = p.statusClass === 'item-unpaid' ? 'var(--expense-color)' : (p.statusClass === 'item-partial' ? '#b45309' : 'var(--income-color)');
-                
                 return `
                 <div class="sidebar-item ${p.statusClass} ${p.id === currentOverviewProjectId ? 'active' : ''}" 
                      onclick="selectOverviewProject('${p.id}')">
                     
                     <span class="status-dot"></span>
                     
-                    <div class="item-name" title="${p.name}">📁 ${p.name}</div>
+                    <div class="item-name" title="${p.name}" style="display: block !important; font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        📁 ${p.name}
+                    </div>
                     
-                    <div class="item-sub">
-                        <span style="font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.6); color: ${badgeColor};">
-                            ${p.statusText}
-                        </span>
+                    <div class="item-sub" style="display: flex; justify-content: flex-end; font-size: 0.75rem; color: #64748b;">
                         <span>已收: ¥${formatMoney(p.received)}</span>
                     </div>
 
