@@ -2446,60 +2446,116 @@ function toggleSupplier(trClass, iconElement) {
             if (typeof renderProjectOverview === 'function' && document.getElementById('page-project-overview').classList.contains('active')) renderProjectOverview();
         }
         // ================= 【新增代码】项目总览核心逻辑 =================
-        function renderProjectOverview() {
-            const selectEl = document.getElementById('overview-project-select');
-            
-            // 1. 保持下拉框选项最新
-            const currentVal = selectEl.value;
-            selectEl.innerHTML = dataStore.projects.length === 0 ? '<option value="">--暂无项目--</option>' : dataStore.projects.map(p => `<option value="${p.id}">📁 ${p.name} (${p.client})</option>`).join('');
-            if (currentVal && dataStore.projects.find(p => p.id === currentVal)) {
-                selectEl.value = currentVal;
-            } else if (dataStore.projects.length > 0) {
-                selectEl.value = dataStore.projects[0].id;
-            }
+        // ================= 【升级版】项目总览核心逻辑 (带智能排序与侧边栏) =================
+        let currentOverviewProjectId = null; // 记住当前点开的是哪个项目
 
-            const pId = selectEl.value;
-            if (!pId) {
-                document.getElementById('overview-content').innerHTML = '<div class="card" style="text-align:center; padding: 40px; color: var(--text-muted);">请先在月度工作台创建项目</div>';
+        // 切换侧边栏折叠/展开
+        function toggleOverviewSidebar() {
+            document.getElementById('overview-sidebar').classList.toggle('collapsed');
+        }
+
+        // 点击左侧菜单时触发
+        function selectOverviewProject(projectId) {
+            currentOverviewProjectId = projectId;
+            renderProjectOverview(); // 重新渲染刷新高亮状态和右侧数据
+        }
+
+        function renderProjectOverview() {
+            const sidebarList = document.getElementById('overview-sidebar-list');
+            const contentArea = document.getElementById('overview-content');
+
+            if (dataStore.projects.length === 0) {
+                sidebarList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999; font-size: 0.8rem;">暂无项目</div>';
+                contentArea.innerHTML = '<div class="card" style="text-align:center; padding: 40px; color: var(--text-muted);">请先在月度工作台创建项目</div>';
                 return;
             }
 
+            // 1. 数据预处理与排序 (核心魔法：计算状态、上色并排序)
+            let sidebarData = dataStore.projects.map(p => {
+                let received = 0;
+                // 计算已收到账的钱
+                dataStore.income.filter(i => i.projectId === p.id).forEach(i => {
+                    if (i.status === '已到账') received += i.amount * i.rate;
+                });
+                const contractCNY = (p.contractAmount || 0) * (p.exchangeRate || 1);
+
+                let statusText, statusClass, sortWeight;
+                
+                // 判断逻辑：未收(红) -> 收一部分(黄) -> 完全结清(绿)
+                if (contractCNY > 0 && received >= contractCNY - 1) { 
+                    // 减1是为了容忍极小的汇率误差
+                    statusText = "已结清"; statusClass = "item-paid"; sortWeight = 3;
+                } else if (received > 0) {
+                    statusText = "部分收款"; statusClass = "item-partial"; sortWeight = 2;
+                } else {
+                    statusText = "未收"; statusClass = "item-unpaid"; sortWeight = 1;
+                }
+
+                return { ...p, received, contractCNY, statusText, statusClass, sortWeight };
+            });
+
+            // 执行排序：按权重(1->2->3)从上往下排。如果是同等状态，合同金额大的排前面
+            sidebarData.sort((a, b) => {
+                if (a.sortWeight !== b.sortWeight) return a.sortWeight - b.sortWeight;
+                return b.contractCNY - a.contractCNY;
+            });
+
+            // 如果当前没有选中项目，默认选中排序第一的那个(最紧急的未收项目)
+            if (!currentOverviewProjectId || !dataStore.projects.find(p => p.id === currentOverviewProjectId)) {
+                currentOverviewProjectId = sidebarData[0].id;
+            }
+
+            // 2. 渲染左侧列表
+            sidebarList.innerHTML = sidebarData.map(p => `
+                <div class="sidebar-item ${p.statusClass} ${p.id === currentOverviewProjectId ? 'active' : ''}" 
+                     onclick="selectOverviewProject('${p.id}')">
+                    <span class="status-dot"></span>
+                    <div class="item-name" title="${p.name}">📁 ${p.name}</div>
+                    <div class="item-sub">
+                        <span style="font-weight:600; color: ${p.statusClass === 'item-unpaid' ? 'var(--expense-color)' : (p.statusClass === 'item-partial' ? '#b45309' : 'var(--income-color)')};">${p.statusText}</span>
+                        <span>已收: ¥${formatMoney(p.received)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // 3. 渲染右侧面板 (复用你原本完美的渲染逻辑)
+            renderOverviewDetailCard(currentOverviewProjectId);
+        }
+
+        // 专门负责渲染右侧详细数据的函数 (把你原本代码拆分一下)
+        function renderOverviewDetailCard(pId) {
             const project = dataStore.projects.find(p => p.id === pId);
-            
-            // 2. 客户收款区统计
+            if(!project) return;
+
+            // --- 下面这部分完全保留你原本计算和渲染面板的逻辑 ---
             let incReceived = 0, incUnreceived = 0, incTotalCNY = 0;
             let depositCNY = 0, balanceCNY = 0;
-            let curTotals = {}; // 原币种统计字典
+            let curTotals = {}; 
             
             dataStore.income.filter(i => i.projectId === pId).forEach(i => {
                 const valCNY = i.amount * i.rate;
                 incTotalCNY += valCNY;
-                
                 if (i.status === '已到账') incReceived += valCNY;
                 else incUnreceived += valCNY;
                 
                 if (!curTotals[i.currency]) curTotals[i.currency] = 0;
                 curTotals[i.currency] += i.amount;
                 
-                // 根据备注字段智能区分定金与尾款
                 const remark = i.remark || '';
                 if (remark.includes('定') || remark.includes('首') || remark.includes('预')) depositCNY += valCNY;
                 else if (remark.includes('尾') || remark.includes('结')) balanceCNY += valCNY;
             });
 
-            // 3. 供应商成本区统计
             let expPaid = 0, expUnpaid = 0, expTotalCNY = 0;
             let supplierMap = {};
             
             dataStore.expense.filter(e => e.projectId === pId).forEach(e => {
                 const valCNY = e.amount * e.rate;
                 expTotalCNY += valCNY;
-                
                 const isPaid = (e.status || '已支付') === '已支付';
                 if (isPaid) expPaid += valCNY;
                 else expUnpaid += valCNY;
                 
-                // 按供应商分组
                 const supp = e.supplier || '未登记供应商(或内部)';
                 if (!supplierMap[supp]) supplierMap[supp] = { total: 0, paid: 0, unpaid: 0 };
                 supplierMap[supp].total += valCNY;
@@ -2507,13 +2563,9 @@ function toggleSupplier(trClass, iconElement) {
                 else supplierMap[supp].unpaid += valCNY;
             });
 
-            // 4. 项目利润与健康度评分
             const profit = incTotalCNY - expTotalCNY;
-            
             let healthText = '🟢 状况良好 (各项指标正常)';
             let healthColor = 'var(--income-color)';
-            
-            // 严格遵循您的健康度评分逻辑
             if (profit < 0) {
                 healthText = '🔴 亏损预警 (账面利润为负)';
                 healthColor = 'var(--expense-color)';
@@ -2522,15 +2574,13 @@ function toggleSupplier(trClass, iconElement) {
                 healthColor = 'var(--expense-color)';
             } else if (incUnreceived > incReceived) {
                 healthText = '🟡 收款缓慢关注 (未收账款 > 已收账款)';
-                healthColor = '#f59e0b'; // 黄色
+                healthColor = '#f59e0b'; 
             }
 
-            // 格式化多币种标签
             const currencyHtml = Object.keys(curTotals).length > 0 
                 ? Object.entries(curTotals).map(([c, a]) => `<span class="tag" style="background:#e0f2fe; color:#0369a1;">${a.toLocaleString('zh-CN', {minimumFractionDigits:2})} ${c}</span>`).join(' ') 
                 : '<span style="color:#999;">无数据</span>';
 
-            // 5. 渲染页面内容
             const html = `
                 <div class="management-grid" style="margin-bottom: 20px;">
                     <div class="card" style="border-top: 4px solid var(--profit-color);">
@@ -2541,7 +2591,6 @@ function toggleSupplier(trClass, iconElement) {
                             <div><span style="color:var(--text-muted);">项目经理：</span><strong>👤 ${project.manager || '未指定'}</strong></div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="color:var(--text-muted);">当前状态：</span>
-                                <!-- 状态快捷修改入口 -->
                                 <select onchange="updateProjectStatus('${project.id}', this.value)" style="padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; outline: none; cursor: pointer;">
                                     <option value="进行中" ${project.orderStatus === '进行中' ? 'selected' : ''}>⏳ 进行中</option>
                                     <option value="已完成" ${project.orderStatus === '已完成' ? 'selected' : ''}>✅ 已完成</option>
@@ -2563,7 +2612,6 @@ function toggleSupplier(trClass, iconElement) {
                 </div>
 
                 <div class="management-grid">
-                    <!-- 收款统计区 -->
                     <div class="card">
                         <h2 class="section-title" style="color: var(--income-color);">💰 客户收款情况</h2>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
@@ -2586,7 +2634,6 @@ function toggleSupplier(trClass, iconElement) {
                         </div>
                     </div>
 
-                    <!-- 供应商成本区 -->
                     <div class="card">
                         <h2 class="section-title" style="color: var(--expense-color);">💸 供应商成本分组</h2>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
@@ -2628,16 +2675,6 @@ function toggleSupplier(trClass, iconElement) {
                 </div>
             `;
             document.getElementById('overview-content').innerHTML = html;
-        }
-
-        // 修改项目状态后保存到云端并刷新总览页面
-        async function updateProjectStatus(projectId, newStatus) {
-            const pIndex = dataStore.projects.findIndex(p => p.id === projectId);
-            if(pIndex > -1) {
-                dataStore.projects[pIndex].orderStatus = newStatus;
-                await saveData(); // 触发云端保存
-                renderProjectOverview(); // 即刻刷新局部页面
-            }
         }
 
         // ================= 【新增代码】：收入/支出明细编辑逻辑 =================
