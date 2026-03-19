@@ -954,16 +954,25 @@
     <!-- ================= 【新增代码】单项目总览页面 ================= -->
     <div id="page-project-overview" class="page">
         <div class="container">
-            <div class="header">
+            <div class="header" style="margin-bottom: 15px;">
                 <h1>📁 单项目全景分析总览</h1>
-                <div class="controls-wrapper">
-                    <div class="filter-wrapper">
-                        <label for="overview-project-select">选择分析项目：</label>
-                        <!-- 选择项目时触发渲染 -->
-                        <select id="overview-project-select" class="filter-input" style="width: 250px;" onchange="renderProjectOverview()"></select>
-                    </div>
                 </div>
+            
+            <div class="overview-layout">
+                <div class="overview-sidebar" id="overview-sidebar">
+                    <div class="sidebar-header">
+                        <span class="sidebar-title">项目列表</span>
+                        <button class="sidebar-toggle-btn" onclick="toggleOverviewSidebar()" title="收起/展开菜单">☰</button>
+                    </div>
+                    <div class="sidebar-list" id="overview-sidebar-list">
+                        </div>
+                </div>
+
+                <div class="overview-main-content" id="overview-content">
+                    </div>
             </div>
+        </div>
+    </div>
             <!-- 动态渲染数据区 -->
             <div id="overview-content"></div>
         </div>
