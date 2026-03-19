@@ -461,6 +461,117 @@
     .pie-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
     .legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; }
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+       /* ================= 【新增】单项目总览主从布局与侧边栏 ================= */
+    .overview-layout {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    /* 左侧可折叠菜单栏 */
+    .overview-sidebar {
+        width: 280px;
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 丝滑的折叠动画 */
+        overflow: hidden;
+        flex-shrink: 0;
+        height: calc(100vh - 120px); /* 独立滚动区域 */
+        position: sticky;
+        top: 80px;
+    }
+
+    /* 折叠后的状态 */
+    .overview-sidebar.collapsed {
+        width: 60px;
+    }
+
+    .sidebar-header {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+
+    /* 类似 Gemini 的汉堡包折叠按钮 */
+    .sidebar-toggle-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: var(--text-muted);
+        padding: 4px;
+        border-radius: 6px;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .sidebar-toggle-btn:hover { background: #f1f5f9; color: var(--text-main); }
+
+    .sidebar-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-main);
+        transition: opacity 0.2s;
+    }
+    .overview-sidebar.collapsed .sidebar-title { opacity: 0; pointer-events: none; display: none; }
+
+    .sidebar-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* 每一个项目小框卡片 */
+    .sidebar-item {
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .sidebar-item:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    /* 选中时的蓝色高亮边框 */
+    .sidebar-item.active { border-color: var(--profit-color); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+    /* 👇 核心魔法：三种状态的背景色 (完美复原你图三的浅色风格) */
+    .item-unpaid { background: #fef2f2; border-color: #fee2e2; }  /* 未收：浅红色 */
+    .item-partial { background: #fffbeb; border-color: #fef3c7; } /* 收一部分：浅黄色 */
+    .item-paid { background: #f0fdf4; border-color: #dcfce7; }    /* 完全结清：浅绿色 */
+
+    .item-name { font-size: 0.85rem; font-weight: 600; color: var(--text-main); text-overflow: ellipsis; overflow: hidden; }
+    .item-sub { font-size: 0.72rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+
+    /* 折叠后只显示状态小圆点 */
+    .overview-sidebar.collapsed .sidebar-item { padding: 12px 0; align-items: center; }
+    .overview-sidebar.collapsed .item-name, .overview-sidebar.collapsed .item-sub { display: none; }
+    .overview-sidebar.collapsed .status-dot { width: 14px; height: 14px; border-radius: 50%; display: block; }
+    
+    .status-dot { display: none; }
+    .item-unpaid .status-dot { background: var(--expense-color); }
+    .item-partial .status-dot { background: #f59e0b; }
+    .item-paid .status-dot { background: var(--income-color); }
+
+    .overview-main-content {
+        flex: 1;
+        min-width: 0; /* 防止右侧内容撑破边界 */
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
