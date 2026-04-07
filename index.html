@@ -581,7 +581,15 @@
     .overview-sidebar.collapsed .item-sub { 
         display: none !important; 
     }
-    .overview-sidebar.collapsed .status-dot { width: 12px; height: 12px; border-radius: 50%; display: block; flex-shrink: 0; }
+   .overview-sidebar.collapsed .status-dot { 
+        width: 12px; 
+        height: 12px; 
+        min-width: 12px;  /* 增加最小宽度保护 */
+        min-height: 12px; /* 增加最小高度保护 */
+        border-radius: 50%; 
+        display: block; 
+        flex-shrink: 0;
+    }
     
     .status-dot { display: none; }
     .item-unpaid .status-dot { background: var(--expense-color); }
