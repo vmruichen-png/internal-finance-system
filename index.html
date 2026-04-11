@@ -1161,6 +1161,14 @@
                         <input type="date" id="query-date-to" class="form-control" onchange="runQuery()">
                     </div>
                     <div class="form-group">
+                        <label>最小金额 (CNY)</label>
+                        <input type="number" id="query-amount-min" class="form-control" placeholder="如: 5000" step="0.01" min="0" oninput="runQuery()">
+                    </div>
+                    <div class="form-group">
+                        <label>最大金额 (CNY)</label>
+                        <input type="number" id="query-amount-max" class="form-control" placeholder="如: 50000" step="0.01" min="0" oninput="runQuery()">
+                    </div>
+                    <div class="form-group">
                         <label>关键词搜索</label>
                         <input type="text" id="query-keyword" class="form-control" placeholder="供应商、备注..." oninput="runQuery()">
                     </div>
