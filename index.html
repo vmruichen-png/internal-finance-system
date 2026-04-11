@@ -673,12 +673,13 @@
                     style="padding:6px 14px; border-radius:6px; border:none; font-size:0.85rem; font-weight:600; cursor:pointer; background:#3b82f6; color:white; transition:all 0.2s;">
                     📅 按月筛选
                 </button>
-                <button id="toggle-btn-all" onclick="setMonthMode('all')"
+                <button id="toggle-btn-all" onclick="setMonthMode('year')"
                     style="padding:6px 14px; border-radius:6px; border:none; font-size:0.85rem; font-weight:600; cursor:pointer; background:transparent; color:#6b7280; transition:all 0.2s;">
-                    📋 全部历史
+                    📆 按年筛选
                 </button>
             </div>
             <input type="month" id="global-month" class="filter-input">
+            <select id="global-year" class="filter-input" style="display:none;"></select>
         </div>
         <button class="btn-action" onclick="exportExcel()">⬇️ 导出当前明细</button>
     </div>
