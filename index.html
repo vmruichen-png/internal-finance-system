@@ -1525,7 +1525,13 @@
         }
 
         // ================= 月度工作台与交互逻辑 =================
-        function isSelectedMonth(dateString) { return dateString.startsWith(document.getElementById('global-month').value); }
+        function isSelectedMonth(dateString) {
+            if (currentFilterMode === 'month') {
+                return dateString.startsWith(document.getElementById('global-month').value);
+            } else {
+                return dateString.startsWith(document.getElementById('global-year').value);
+            }
+        }
 
         function toggleCurrencyRate(prefix) {
             const currency = document.getElementById(`${prefix}-currency`).value;
