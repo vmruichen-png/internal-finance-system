@@ -1368,13 +1368,18 @@
             sel.addEventListener('change', updateMonthlyDashboard);
         })();
 
+        let currentFilterMode = 'month'; // 记录当前筛选模式
+
         function setMonthMode(mode) {
+            currentFilterMode = mode;
             const monthInput = document.getElementById('global-month');
+            const yearInput = document.getElementById('global-year');
             const btnMonth = document.getElementById('toggle-btn-month');
             const btnAll = document.getElementById('toggle-btn-all');
 
             if (mode === 'month') {
                 monthInput.style.display = 'block';
+                yearInput.style.display = 'none';
                 if (!monthInput.value) monthInput.value = currentMonthStr;
                 btnMonth.style.background = '#3b82f6';
                 btnMonth.style.color = 'white';
@@ -1382,7 +1387,7 @@
                 btnAll.style.color = '#6b7280';
             } else {
                 monthInput.style.display = 'none';
-                monthInput.value = '';
+                yearInput.style.display = 'block';
                 btnAll.style.background = '#3b82f6';
                 btnAll.style.color = 'white';
                 btnMonth.style.background = 'transparent';
