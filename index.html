@@ -2873,6 +2873,93 @@ function toggleSupplier(trClass, iconElement) {
             }
         });
 
+       // ================= 【新增代码】：管理费柱状图点击展开月度明细 =================
+        function showAdminMonthDetail(monthIdx) {
+            const panel = document.getElementById('admin-month-detail-panel');
+            if(!panel) return;
+
+            const items = window._adminMonthlyItems ? window._adminMonthlyItems[monthIdx] : [];
+            const total = window._adminMonthlyTotals ? window._adminMonthlyTotals[monthIdx] : 0;
+
+            // 高亮当前柱子，取消其他柱子的高亮
+            for(let i = 0; i < 12; i++) {
+                const col = document.getElementById('admin-bar-' + i);
+                if(col) col.classList.toggle('active', i === monthIdx);
+            }
+
+            // 如果该月无数据
+            if(items.length === 0) {
+                panel.innerHTML = `
+                    <div class="admin-month-detail">
+                        <div class="admin-month-detail-header">
+                            <h4>📅 ${monthIdx + 1}月 管理费明细</h4>
+                            <button class="admin-month-detail-close" onclick="closeAdminMonthDetail()">收起 ✕</button>
+                        </div>
+                        <div style="text-align:center; color:#999; padding: 20px; font-size: 0.85rem;">该月暂无管理费支出记录</div>
+                    </div>`;
+                return;
+            }
+
+            // 按日期排序（倒序）
+            const sorted = [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // 按科目分组统计
+            const catMap = {};
+            sorted.forEach(item => {
+                if(!catMap[item.category]) catMap[item.category] = 0;
+                catMap[item.category] += item.val;
+            });
+            const catSummary = Object.entries(catMap).sort((a, b) => b[1] - a[1])
+                .map(([cat, val]) => `<span style="background:#ede9fe; color:#5b21b6; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:600;">${cat} ¥${formatMoney(val)}</span>`)
+                .join(' ');
+
+            let tableRows = sorted.map(item => `
+                <tr>
+                    <td style="padding:8px 10px; font-size:0.82rem;">${item.date}</td>
+                    <td style="padding:8px 10px; font-size:0.82rem;">${item.category}</td>
+                    <td style="padding:8px 10px; font-size:0.82rem; color:var(--admin-color); font-weight:600;">
+                        ${item.currency !== 'CNY' ? item.currency + ' ' + formatMoney(item.amount) + ' × ' + item.rate + ' = ' : ''}¥${formatMoney(item.val)}
+                    </td>
+                    <td style="padding:8px 10px; font-size:0.82rem; color:var(--text-muted);">${item.remark || '-'}</td>
+                </tr>
+            `).join('');
+
+            panel.innerHTML = `
+                <div class="admin-month-detail">
+                    <div class="admin-month-detail-header">
+                        <h4>📅 ${monthIdx + 1}月 管理费明细 — 共 ${items.length} 笔，合计 ¥${formatMoney(total)}</h4>
+                        <button class="admin-month-detail-close" onclick="closeAdminMonthDetail()">收起 ✕</button>
+                    </div>
+                    <div style="margin-bottom: 10px; display:flex; gap:6px; flex-wrap:wrap;">${catSummary}</div>
+                    <div class="table-wrapper" style="max-height: 260px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="padding:8px 10px;">日期</th>
+                                    <th style="padding:8px 10px;">费用科目</th>
+                                    <th style="padding:8px 10px;">金额 (CNY)</th>
+                                    <th style="padding:8px 10px;">备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            
+            // 滚动到明细面板
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeAdminMonthDetail() {
+            const panel = document.getElementById('admin-month-detail-panel');
+            if(panel) panel.innerHTML = '';
+            // 取消所有柱子高亮
+            for(let i = 0; i < 12; i++) {
+                const col = document.getElementById('admin-bar-' + i);
+                if(col) col.classList.remove('active');
+            }
+        }
+
         // ================= 【新增代码】：明细表格快捷搜索逻辑 =================
         function filterTable(inputId, tableId) {
             const input = document.getElementById(inputId);
