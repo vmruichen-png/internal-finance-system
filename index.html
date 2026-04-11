@@ -656,6 +656,7 @@
             <button class="nav-btn" onclick="switchPage('page-annual', this)">年度经营</button>
             <button class="nav-btn" onclick="switchPage('page-client', this)">客户分析</button>
             <button class="nav-btn" onclick="switchPage('page-project-overview', this)">项目总览</button>
+            <button class="nav-btn" onclick="switchPage('page-query', this)">数据查询</button>
             <button class="nav-btn" onclick="switchPage('page-settings', this)">系统设置</button>
         </div>
     </nav>
@@ -1096,6 +1097,115 @@
         </div>
     </div>
 
+    <!-- ================= 【新增页面】数据查询 ================= -->
+    <div id="page-query" class="page">
+        <div class="container">
+            <div class="header">
+                <h1>🔍 数据查询</h1>
+            </div>
+
+            <!-- 筛选条件栏 -->
+            <div class="card">
+                <h2 class="section-title">🎛️ 筛选条件</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; align-items: end;">
+                    <div class="form-group">
+                        <label>数据类型</label>
+                        <select id="query-type" class="form-control" onchange="runQuery()">
+                            <option value="all">全部</option>
+                            <option value="income">收入</option>
+                            <option value="expense">支出</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>项目/归属</label>
+                        <select id="query-project" class="form-control" onchange="runQuery()">
+                            <option value="all">全部项目</option>
+                            <option value="ADMIN">公司管理费</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>客户公司</label>
+                        <select id="query-client" class="form-control" onchange="runQuery()">
+                            <option value="all">全部客户</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select id="query-status" class="form-control" onchange="runQuery()">
+                            <option value="all">全部状态</option>
+                            <option value="已到账">已到账</option>
+                            <option value="未到账">未到账</option>
+                            <option value="已支付">已支付</option>
+                            <option value="未支付">未支付</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="query-category-wrap">
+                        <label>费用科目</label>
+                        <select id="query-category" class="form-control" onchange="runQuery()">
+                            <option value="all">全部科目</option>
+                            <option value="货款">货款</option>
+                            <option value="物流">物流</option>
+                            <option value="工资/社保">工资/社保</option>
+                            <option value="房租/水电">房租/水电</option>
+                            <option value="差旅/招待">差旅/招待</option>
+                            <option value="营销/广告">营销/广告</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>起始日期</label>
+                        <input type="date" id="query-date-from" class="form-control" onchange="runQuery()">
+                    </div>
+                    <div class="form-group">
+                        <label>截止日期</label>
+                        <input type="date" id="query-date-to" class="form-control" onchange="runQuery()">
+                    </div>
+                    <div class="form-group">
+                        <label>关键词搜索</label>
+                        <input type="text" id="query-keyword" class="form-control" placeholder="供应商、备注..." oninput="runQuery()">
+                    </div>
+                </div>
+                <div style="margin-top: 14px; display: flex; gap: 10px;">
+                    <button class="btn-action" style="background-color: var(--expense-color);" onclick="resetQuery()">清空条件</button>
+                </div>
+            </div>
+
+            <!-- 汇总栏 -->
+            <div class="card" style="padding: 14px 20px;">
+                <div id="query-summary" style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap; font-size: 0.85rem;">
+                    <span style="color: var(--text-muted);">筛选结果：<strong id="query-count" style="color: var(--text-main);">0</strong> 笔</span>
+                    <span style="color: var(--text-muted);">收入合计：<strong id="query-income-sum" style="color: var(--income-color);">¥ 0.00</strong></span>
+                    <span style="color: var(--text-muted);">支出合计：<strong id="query-expense-sum" style="color: var(--expense-color);">¥ 0.00</strong></span>
+                    <span style="color: var(--text-muted);">净额：<strong id="query-net-sum" style="color: var(--profit-color);">¥ 0.00</strong></span>
+                </div>
+            </div>
+
+            <!-- 结果表格 -->
+            <div class="card">
+                <h2 class="section-title" id="query-table-title">📋 查询结果</h2>
+                <div class="table-wrapper" style="max-height: 600px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="6%">类型</th>
+                                <th width="10%">日期</th>
+                                <th width="16%">项目/归属</th>
+                                <th width="10%">客户</th>
+                                <th width="8%">科目</th>
+                                <th width="8%">状态</th>
+                                <th width="14%">金额 (CNY)</th>
+                                <th width="10%">供应商</th>
+                                <th width="18%">备注</th>
+                            </tr>
+                        </thead>
+                        <tbody id="query-results-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ================= 【新增页面结束】 ================= -->
+
     <div id="page-settings" class="page">
         <div class="container">
             <div class="header">
@@ -1386,6 +1496,7 @@
             if(pageId === 'page-client') renderClientDashboard();
             // 【新增代码】切换到项目总览时渲染
             if(pageId === 'page-project-overview') renderProjectOverview(); 
+            if(pageId === 'page-query') initQueryPage();
         }
 
         // ================= 月度工作台与交互逻辑 =================
@@ -2960,6 +3071,201 @@ function toggleSupplier(trClass, iconElement) {
             }
         }
 
+        // ================= 【新增代码】：数据查询页面逻辑 =================
+        function initQueryPage() {
+            // 动态填充项目下拉框
+            const projSelect = document.getElementById('query-project');
+            const currentVal = projSelect.value;
+            projSelect.innerHTML = '<option value="all">全部项目</option><option value="ADMIN">公司管理费</option>';
+            dataStore.projects.forEach(p => {
+                projSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+            });
+            projSelect.value = currentVal || 'all';
+
+            // 动态填充客户下拉框
+            const clientSelect = document.getElementById('query-client');
+            const currentClient = clientSelect.value;
+            clientSelect.innerHTML = '<option value="all">全部客户</option>';
+            const clients = [...new Set(dataStore.projects.map(p => p.client).filter(Boolean))].sort();
+            clients.forEach(c => {
+                clientSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            clientSelect.value = currentClient || 'all';
+
+            runQuery();
+        }
+
+        function resetQuery() {
+            document.getElementById('query-type').value = 'all';
+            document.getElementById('query-project').value = 'all';
+            document.getElementById('query-client').value = 'all';
+            document.getElementById('query-status').value = 'all';
+            document.getElementById('query-category').value = 'all';
+            document.getElementById('query-date-from').value = '';
+            document.getElementById('query-date-to').value = '';
+            document.getElementById('query-keyword').value = '';
+            runQuery();
+        }
+
+        function runQuery() {
+            const type = document.getElementById('query-type').value;
+            const projectId = document.getElementById('query-project').value;
+            const client = document.getElementById('query-client').value;
+            const status = document.getElementById('query-status').value;
+            const category = document.getElementById('query-category').value;
+            const dateFrom = document.getElementById('query-date-from').value;
+            const dateTo = document.getElementById('query-date-to').value;
+            const keyword = document.getElementById('query-keyword').value.toLowerCase().trim();
+
+            // 把收入和支出统一拍平成同一格式
+            let allRecords = [];
+
+            if (type === 'all' || type === 'income') {
+                dataStore.income.forEach(item => {
+                    const proj = getProjectById(item.projectId);
+                    allRecords.push({
+                        recordType: 'income',
+                        date: item.date,
+                        projectId: item.projectId,
+                        projectName: proj.name,
+                        client: proj.client || '',
+                        category: '-',
+                        status: item.status,
+                        amount: item.amount,
+                        currency: item.currency || 'CNY',
+                        rate: item.rate || 1,
+                        cny: item.amount * (item.rate || 1),
+                        supplier: '-',
+                        remark: item.remark || ''
+                    });
+                });
+            }
+
+            if (type === 'all' || type === 'expense') {
+                dataStore.expense.forEach(item => {
+                    const proj = item.projectId === 'ADMIN' ? { name: '公司管理费', client: '-' } : getProjectById(item.projectId);
+                    allRecords.push({
+                        recordType: 'expense',
+                        date: item.date,
+                        projectId: item.projectId,
+                        projectName: proj.name,
+                        client: proj.client || '-',
+                        category: item.category || '',
+                        status: item.status || '已支付',
+                        amount: item.amount,
+                        currency: item.currency || 'CNY',
+                        rate: item.rate || 1,
+                        cny: item.amount * (item.rate || 1),
+                        supplier: item.supplier || '',
+                        remark: item.remark || ''
+                    });
+                });
+            }
+
+            // 应用筛选条件
+            let filtered = allRecords;
+
+            // 项目筛选
+            if (projectId !== 'all') {
+                filtered = filtered.filter(r => r.projectId === projectId);
+            }
+
+            // 客户筛选
+            if (client !== 'all') {
+                filtered = filtered.filter(r => r.client === client);
+            }
+
+            // 状态筛选
+            if (status !== 'all') {
+                filtered = filtered.filter(r => r.status === status);
+            }
+
+            // 科目筛选
+            if (category !== 'all') {
+                filtered = filtered.filter(r => r.category === category);
+            }
+
+            // 日期范围筛选
+            if (dateFrom) {
+                filtered = filtered.filter(r => r.date >= dateFrom);
+            }
+            if (dateTo) {
+                filtered = filtered.filter(r => r.date <= dateTo);
+            }
+
+            // 关键词搜索（匹配供应商、备注、项目名、客户名）
+            if (keyword) {
+                filtered = filtered.filter(r =>
+                    r.supplier.toLowerCase().includes(keyword) ||
+                    r.remark.toLowerCase().includes(keyword) ||
+                    r.projectName.toLowerCase().includes(keyword) ||
+                    r.client.toLowerCase().includes(keyword) ||
+                    r.category.toLowerCase().includes(keyword)
+                );
+            }
+
+            // 按日期降序排列
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // 计算汇总
+            let incomeSum = 0, expenseSum = 0;
+            filtered.forEach(r => {
+                if (r.recordType === 'income') incomeSum += r.cny;
+                else expenseSum += r.cny;
+            });
+            const netSum = incomeSum - expenseSum;
+
+            document.getElementById('query-count').innerText = filtered.length;
+            document.getElementById('query-income-sum').innerText = `¥ ${formatMoney(incomeSum)}`;
+            document.getElementById('query-expense-sum').innerText = `¥ ${formatMoney(expenseSum)}`;
+            const netEl = document.getElementById('query-net-sum');
+            netEl.innerText = `¥ ${formatMoney(netSum)}`;
+            netEl.style.color = netSum < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
+
+            // 渲染表格
+            const tbody = document.getElementById('query-results-table');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999; padding:30px;">没有符合条件的记录</td></tr>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(r => {
+                const isInc = r.recordType === 'income';
+                const typeTag = isInc
+                    ? '<span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:600;">收入</span>'
+                    : '<span style="background:#fce7f3; color:#9d174d; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:600;">支出</span>';
+
+                // 状态样式
+                let statusStyle = '';
+                if (r.status === '已到账' || r.status === '已支付') {
+                    statusStyle = 'background:#dcfce7; color:#166534; border:1px solid #bbf7d0;';
+                } else {
+                    statusStyle = 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;';
+                }
+
+                // 金额显示
+                const amountColor = isInc ? 'var(--income-color)' : 'var(--expense-color)';
+                let amountHtml = `<span style="color:${amountColor}; font-weight:700;">¥ ${formatMoney(r.cny)}</span>`;
+                if (r.currency !== 'CNY') {
+                    amountHtml += `<span class="text-muted-sm">原币: ${r.amount} ${r.currency}</span>`;
+                }
+
+                html += `<tr>
+                    <td>${typeTag}</td>
+                    <td style="font-size:0.82rem; color:var(--text-muted); white-space:nowrap;">${r.date}</td>
+                    <td style="font-weight:600; font-size:0.85rem;">${r.projectName}</td>
+                    <td style="font-size:0.82rem;">${r.client}</td>
+                    <td style="font-size:0.82rem;">${r.category}</td>
+                    <td><span style="display:inline-block; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:600; white-space:nowrap; ${statusStyle}">${r.status}</span></td>
+                    <td>${amountHtml}</td>
+                    <td style="font-size:0.82rem; color:var(--text-muted);">${r.supplier || '-'}</td>
+                    <td style="font-size:0.78rem; color:var(--text-muted);">${r.remark || '-'}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
         // ================= 【新增代码】：明细表格快捷搜索逻辑 =================
         function filterTable(inputId, tableId) {
             const input = document.getElementById(inputId);
@@ -2985,73 +3291,3 @@ function toggleSupplier(trClass, iconElement) {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
