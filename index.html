@@ -1880,7 +1880,33 @@
                 }
             }
 
-            // ================= 1. 柱状图 =================
+           // ================= 1. 柱状图（【已修改】：支持点击展开月度明细） =================
+            // 按月份分组存储管理费明细，供点击展开时使用
+            const adminMonthlyItems = Array.from({length: 12}, () => []);
+            yearExpense.forEach(item => {
+                if(item.projectId === 'ADMIN' && item.date && item.date.length >= 7) {
+                    const parts = item.date.split('-');
+                    if(parts.length >= 2) {
+                        const monthIdx = parseInt(parts[1], 10) - 1;
+                        if(monthIdx >= 0 && monthIdx <= 11) {
+                            adminMonthlyItems[monthIdx].push({
+                                date: item.date,
+                                category: item.category || '未分类',
+                                amount: item.amount,
+                                currency: item.currency || 'CNY',
+                                rate: item.rate || 1,
+                                val: item.amount * (item.rate || 1),
+                                remark: item.remark || '',
+                                supplier: item.supplier || ''
+                            });
+                        }
+                    }
+                }
+            });
+            // 存储到全局变量，供 showAdminMonthDetail 函数读取
+            window._adminMonthlyItems = adminMonthlyItems;
+            window._adminMonthlyTotals = adminMonthly;
+
             const chartBarEl = document.getElementById('chart-monthly-admin');
             if(chartBarEl) {
                 chartBarEl.innerHTML = '';
@@ -1889,7 +1915,7 @@
                     let heightPct = (val / maxVal) * 100;
                     if(val > 0 && heightPct < 2) heightPct = 2;
                     chartBarEl.innerHTML += `
-                        <div class="bar-col" style="height: 100%; justify-content: flex-end;">
+                        <div class="bar-col" id="admin-bar-${idx}" style="height: 100%; justify-content: flex-end;" onclick="showAdminMonthDetail(${idx})">
                             <div class="bar" style="height: ${val > 0 ? heightPct : 0}%;">
                                 ${val > 0 ? `<div class="bar-val">¥${(val/1000).toFixed(1)}k</div>` : ''}
                             </div>
@@ -1898,6 +1924,9 @@
                     `;
                 });
             }
+            // 清空之前可能残留的明细面板
+            const detailPanel = document.getElementById('admin-month-detail-panel');
+            if(detailPanel) detailPanel.innerHTML = '';
             
             // ================= 2. 饼图 =================
             const chartPieEl = document.getElementById('chart-category-pie');
