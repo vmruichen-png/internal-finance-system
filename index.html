@@ -779,7 +779,7 @@
                                     <th width="14%">已到账</th>
                                     <th width="14%">未到账(应收)</th>
                                     <th width="13%">已付成本</th>
-                                    <th width="13%">真实毛利</th>
+                                    <th width="13%">现金毛利</th>
                                     <th width="8%">操作</th>
                                 </tr>
                             </thead>
@@ -1508,7 +1508,8 @@
         document.getElementById('global-month').addEventListener('change', updateMonthlyDashboard);
         document.getElementById('annual-year').addEventListener('change', renderAnnualDashboard);
 
-        function formatMoney(amount) { return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function formatMoney(amount) { if (isNaN(amount) || !isFinite(amount)) amount = 0; return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function toCNY(item) { return (item.amount || 0) * (item.rate || 1); }
         function getProjectById(id) { return dataStore.projects.find(p => p.id === id) || { name: '未知', client: '未知' }; }
 
         function switchPage(pageId, btnElement) {
@@ -1695,15 +1696,15 @@
                 let pReceived = 0, pReceivable = 0, pPaidCost = 0, pTotalCost = 0;
                 dataStore.income.forEach(inc => { 
                     if (inc.projectId === p.id) { 
-                        const val = inc.amount * inc.rate; 
+                        const val = toCNY(inc); 
                         inc.status === '已到账' ? pReceived += val : pReceivable += val; 
                     } 
                 });
                 dataStore.expense.forEach(exp => { 
                     if (exp.projectId === p.id) {
-                        const val = exp.amount * exp.rate;
+                        const val = toCNY(exp);
                         pTotalCost += val; 
-                        if ((exp.status || '已支付') === '已支付') pPaidCost += val; 
+                        if ((exp.status || '已支付') !== '应付') pPaidCost += val; 
                     }
                 });
                 return { ...p, pReceived, pReceivable, pTotalCost, pPaidCost, actualGrossProfit: pReceived - pPaidCost };
@@ -1761,16 +1762,16 @@
             let monthTotalProject = 0, monthTotalAdmin = 0; // 用于计算账面总成本
             
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { 
-                const val = item.amount * item.rate; 
+                const val = toCNY(item); 
                 item.status === '已到账' ? monthReceived += val : monthReceivable += val; 
             });
             
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { 
-                const val = item.amount * item.rate; 
+                const val = toCNY(item); 
                 const expStatus = item.status || '已支付'; // 兼容老数据
                 
                 // 1. 拆分已支付和应付
-                if (expStatus === '已支付') {
+                if (expStatus !== '应付') {
                     item.projectId === 'ADMIN' ? monthPaidAdmin += val : monthPaidProject += val; 
                 } else {
                     monthPayable += val; 
@@ -1803,7 +1804,7 @@
         }
 
         function getAmountHtml(item, isIncome) {
-            const cnyTotal = item.amount * item.rate;
+            const cnyTotal = toCNY(item);
             const colorClass = isIncome ? 'text-profit' : 'text-expense';
             return item.currency === 'CNY' ?
                 `<span class="${colorClass}">¥ ${formatMoney(cnyTotal)}</span>` : 
@@ -1935,14 +1936,14 @@
             
             // 1. 统计收入
             yearIncome.forEach(item => { 
-                const val = item.amount * item.rate; 
+                const val = toCNY(item); 
                 annTotalIncome += val;
                 if(item.status === '已到账') annReceived += val; 
             });
 
             // 2. 统计支出
             yearExpense.forEach(item => { 
-                const val = item.amount * item.rate;
+                const val = toCNY(item);
                 if(item.projectId === 'ADMIN') {
                     // --- 管理费逻辑 ---
                     annAdminCost += val;
@@ -2100,8 +2101,8 @@
             
             const projectStats = dataStore.projects.map(p => {
                 let pInc = 0, pCost = 0;
-                yearIncome.filter(i => i.projectId === p.id).forEach(i => pInc += i.amount * i.rate);
-                yearExpense.filter(e => e.projectId === p.id).forEach(e => pCost += e.amount * e.rate);
+                yearIncome.filter(i => i.projectId === p.id).forEach(i => pInc += toCNY(i));
+                yearExpense.filter(e => e.projectId === p.id).forEach(e => pCost += toCNY(e));
                 const pProfit = pInc - pCost; 
                 const pMargin = pInc > 0 ? (pProfit / pInc) * 100 : 0; 
                 const pShare = annTotalIncome > 0 ? (pInc / annTotalIncome) * 100 : 0;
@@ -2124,8 +2125,8 @@
                 if (e.projectId === 'ADMIN') return;
                 const supp = e.supplier || '未登记供应商';
                 if (!supplierMap[supp]) { supplierMap[supp] = { name: supp, total: 0, paid: 0, payable: 0, projects: {} }; }
-                const val = e.amount * e.rate;
-                const isPaid = (e.status || '已支付') === '已支付';
+                const val = toCNY(e);
+                const isPaid = (e.status || '已支付') !== '应付';
                 supplierMap[supp].total += val;
                 if (isPaid) { supplierMap[supp].paid += val; } else { supplierMap[supp].payable += val; }
                 const pName = getProjectById(e.projectId).name || '未知项目';
@@ -2318,7 +2319,7 @@ function toggleSupplier(trClass, iconElement) {
                 if(p) {
                     const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
                     const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
-                    const cnyVal = item.amount * item.rate;
+                    const cnyVal = toCNY(item);
 
                     if(compMap[cId]) {
                         if(item.currency === 'USD') compMap[cId].usdIncome += item.amount;
@@ -2354,7 +2355,7 @@ function toggleSupplier(trClass, iconElement) {
                 if(p) {
                     const cId = p.companyId || (p.client ? 'LEGACY_C_' + p.client : 'unassigned');
                     const mId = p.managerId || (p.manager ? 'LEGACY_M_' + p.manager : 'unassigned');
-                    const expVal = e.amount * e.rate;
+                    const expVal = toCNY(e);
                     
                     if(compMap[cId]) {
                         compMap[cId].expenseCNY += expVal;
@@ -2604,25 +2605,31 @@ function toggleSupplier(trClass, iconElement) {
         }
 
         function exportExcel() {
-            const currentMonth = document.getElementById('global-month').value;
-            if (!currentMonth) return alert('请先选择要导出的月份！');
+            let fileLabel = '';
+            if (currentFilterMode === 'month') {
+                fileLabel = document.getElementById('global-month').value;
+                if (!fileLabel) return alert('请先选择要导出的月份！');
+            } else {
+                fileLabel = document.getElementById('global-year').value + '年';
+                if (!fileLabel) return alert('请先选择要导出的年份！');
+            }
             let csvContent = "\uFEFF流水类型,发生日期,资金状态/科目,归属项目/类型,原币币种,原币金额,手工汇率,折合人民币(CNY),备注\n";
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(inc => {
                 const pName = getProjectById(inc.projectId).name; 
-                const cnyVal = (inc.amount * inc.rate).toFixed(2); 
+                const cnyVal = toCNY(inc).toFixed(2); 
                 const remark = (inc.remark || '').replace(/,/g, '，'); 
-                csvContent += `收入,${inc.date},${inc.status},${pName},${inc.currency},${inc.amount},${inc.rate},${cnyVal},${remark}\n`;
+                csvContent += `收入,${inc.date},${inc.status},${pName},${inc.currency},${inc.amount},${inc.rate || 1},${cnyVal},${remark}\n`;
             });
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(exp => {
                 const pName = exp.projectId === 'ADMIN' ? '公司公摊管理费' : getProjectById(exp.projectId).name; 
-                const cnyVal = (exp.amount * exp.rate).toFixed(2); 
+                const cnyVal = toCNY(exp).toFixed(2); 
                 const remark = (exp.remark || '').replace(/,/g, '，');
-                csvContent += `支出,${exp.date},${exp.category},${pName},${exp.currency},${exp.amount},${exp.rate},${cnyVal},${remark}\n`;
+                csvContent += `支出,${exp.date},${exp.category},${pName},${exp.currency},${exp.amount},${exp.rate || 1},${cnyVal},${remark}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); 
             const link = document.createElement("a"); 
             link.href = URL.createObjectURL(blob); 
-            link.download = `云端财务流水_${currentMonth}.csv`; 
+            link.download = `云端财务流水_${fileLabel}.csv`; 
             link.click();
         }
 
@@ -2717,7 +2724,7 @@ function toggleSupplier(trClass, iconElement) {
                 let received = 0;
                 // 计算已收到账的钱
                 dataStore.income.filter(i => i.projectId === p.id).forEach(i => {
-                    if (i.status === '已到账') received += i.amount * i.rate;
+                    if (i.status === '已到账') received += toCNY(i);
                 });
                 const contractCNY = (p.contractAmount || 0) * (p.exchangeRate || 1);
 
@@ -2788,7 +2795,7 @@ function toggleSupplier(trClass, iconElement) {
             let curTotals = {}; 
             
             dataStore.income.filter(i => i.projectId === pId).forEach(i => {
-                const valCNY = i.amount * i.rate;
+                const valCNY = toCNY(i);
                 incTotalCNY += valCNY;
                 if (i.status === '已到账') incReceived += valCNY;
                 else incUnreceived += valCNY;
@@ -2805,9 +2812,9 @@ function toggleSupplier(trClass, iconElement) {
             let supplierMap = {};
             
             dataStore.expense.filter(e => e.projectId === pId).forEach(e => {
-                const valCNY = e.amount * e.rate;
+                const valCNY = toCNY(e);
                 expTotalCNY += valCNY;
-                const isPaid = (e.status || '已支付') === '已支付';
+                const isPaid = (e.status || '已支付') !== '应付';
                 if (isPaid) expPaid += valCNY;
                 else expUnpaid += valCNY;
                 
