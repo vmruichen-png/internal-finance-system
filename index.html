@@ -3201,6 +3201,16 @@ function toggleSupplier(trClass, iconElement) {
                 filtered = filtered.filter(r => r.date <= dateTo);
             }
 
+            // 金额范围筛选
+            const amountMin = parseFloat(document.getElementById('query-amount-min').value);
+            const amountMax = parseFloat(document.getElementById('query-amount-max').value);
+            if (!isNaN(amountMin)) {
+                filtered = filtered.filter(r => r.cny >= amountMin);
+            }
+            if (!isNaN(amountMax)) {
+                filtered = filtered.filter(r => r.cny <= amountMax);
+            }
+
             // 关键词搜索（匹配供应商、备注、项目名、客户名）
             if (keyword) {
                 filtered = filtered.filter(r =>
