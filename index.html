@@ -1357,6 +1357,17 @@
         document.getElementById('global-month').value = currentMonthStr;
         document.getElementById('annual-year').value = currentYearStr;
 
+        // 【新增】初始化月度工作台的年份选择器
+        (function initGlobalYearSelect() {
+            const sel = document.getElementById('global-year');
+            const thisYear = new Date().getFullYear();
+            for (let y = thisYear; y >= thisYear - 5; y--) {
+                sel.innerHTML += `<option value="${y}">${y} 年</option>`;
+            }
+            sel.value = thisYear;
+            sel.addEventListener('change', updateMonthlyDashboard);
+        })();
+
         function setMonthMode(mode) {
             const monthInput = document.getElementById('global-month');
             const btnMonth = document.getElementById('toggle-btn-month');
