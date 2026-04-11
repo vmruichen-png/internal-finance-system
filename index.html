@@ -3313,6 +3313,29 @@ function toggleSupplier(trClass, iconElement) {
             tbody.innerHTML = html;
         }
 
+        // ================= 【新增代码】：数据查询导出 CSV =================
+        function exportQueryCSV() {
+            const data = window._queryFilteredResults;
+            if (!data || data.length === 0) return alert('当前没有可导出的筛选结果！');
+
+            let csv = "\uFEFF类型,日期,项目/归属,客户,科目,状态,原币币种,原币金额,汇率,折合人民币(CNY),供应商,备注\n";
+            data.forEach(r => {
+                const type = r.recordType === 'income' ? '收入' : '支出';
+                const remark = (r.remark || '').replace(/,/g, '，');
+                const supplier = (r.supplier || '-').replace(/,/g, '，');
+                const projectName = (r.projectName || '').replace(/,/g, '，');
+                const client = (r.client || '').replace(/,/g, '，');
+                csv += `${type},${r.date},${projectName},${client},${r.category},${r.status},${r.currency},${r.amount},${r.rate},${r.cny.toFixed(2)},${supplier},${remark}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const today = new Date().toISOString().split('T')[0];
+            link.download = `数据查询导出_${today}_共${data.length}笔.csv`;
+            link.click();
+        }
+
         // ================= 【新增代码】：明细表格快捷搜索逻辑 =================
         function filterTable(inputId, tableId) {
             const input = document.getElementById(inputId);
