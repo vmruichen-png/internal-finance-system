@@ -3251,6 +3251,9 @@ function toggleSupplier(trClass, iconElement) {
             // 按日期降序排列
             filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            // 存储筛选结果供导出使用
+            window._queryFilteredResults = filtered;
+
             // 计算汇总
             let incomeSum = 0, expenseSum = 0;
             filtered.forEach(r => {
