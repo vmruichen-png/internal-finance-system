@@ -1687,21 +1687,29 @@
 
         function renderLeaderboard() {
             const tbody = document.getElementById('table-leaderboard');
+            const currentYear = document.getElementById('global-year').value || new Date().getFullYear().toString();
             
-            if (dataStore.projects.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">暂无数据</td></tr>`;
+            // 按年份筛选项目：立项日期在当前选择的年份内
+            const yearProjects = dataStore.projects.filter(p => p.startDate && p.startDate.startsWith(currentYear));
+            
+            if (yearProjects.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#999;">该年度暂无立项数据</td></tr>`;
                 return;
             }
 
-            const projectStats = dataStore.projects.map(p => {
+            // 只统计该年度的收支流水
+            const yearIncome = dataStore.income.filter(i => i.date && i.date.startsWith(currentYear));
+            const yearExpense = dataStore.expense.filter(e => e.date && e.date.startsWith(currentYear));
+
+            const projectStats = yearProjects.map(p => {
                 let pReceived = 0, pReceivable = 0, pPaidCost = 0, pTotalCost = 0;
-                dataStore.income.forEach(inc => { 
+                yearIncome.forEach(inc => { 
                     if (inc.projectId === p.id) { 
                         const val = toCNY(inc); 
                         inc.status === '已到账' ? pReceived += val : pReceivable += val; 
                     } 
                 });
-                dataStore.expense.forEach(exp => { 
+                yearExpense.forEach(exp => { 
                     if (exp.projectId === p.id) {
                         const val = toCNY(exp);
                         pTotalCost += val; 
