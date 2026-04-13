@@ -686,32 +686,35 @@
     </div>
 </div>
 
-            <!-- 【替换位置 1】替换原有的 overview-grid grid-5 区域 -->
+            <!-- 统计卡片区 -->
             <div class="overview-grid grid-6">
                 <div class="card stat-card c-income">
-                    <div class="stat-title">本月实际到账 (已到账)</div>
-                    <div class="stat-value text-profit" id="stat-income-received">¥ 0.00</div>
-                    <div class="stat-sub" id="stat-income-total">包含应收总计: ¥ 0.00</div>
+                    <div class="stat-title">总收入 (含应收)</div>
+                    <div class="stat-value text-profit" id="stat-total-income">¥ 0.00</div>
+                    <div class="stat-sub" id="stat-income-sub">已到账: ¥ 0.00</div>
                 </div>
                 <div class="card stat-card c-project">
-                    <div class="stat-title">本月已付项目成本</div>
-                    <div class="stat-value" style="color: var(--project-color);" id="stat-proj-cost">¥ 0.00</div>
-                </div>
-                <div class="card stat-card c-admin">
-                    <div class="stat-title">本月已付管理费</div>
-                    <div class="stat-value" style="color: var(--admin-color);" id="stat-admin-exp">¥ 0.00</div>
+                    <div class="stat-title">总支出 (含应付)</div>
+                    <div class="stat-value" style="color: var(--project-color);" id="stat-total-expense">¥ 0.00</div>
+                    <div class="stat-sub" id="stat-expense-sub">已支付: ¥ 0.00</div>
                 </div>
                 <div class="card stat-card c-alert">
-                    <div class="stat-title">本月应付总额 (未付)</div>
-                    <div class="stat-value" style="color: #f59e0b;" id="stat-payable-total">¥ 0.00</div>
+                    <div class="stat-title">应收未收</div>
+                    <div class="stat-value" style="color: #f59e0b;" id="stat-receivable">¥ 0.00</div>
+                    <div class="stat-sub" id="stat-receivable-sub"></div>
                 </div>
-                <div class="card stat-card c-income">
-                    <div class="stat-title">本月真实现金流</div>
-                    <div class="stat-value" id="stat-cash-flow">¥ 0.00</div>
-                    <div class="stat-sub">实际到账 - 已支付支出</div>
+                <div class="card stat-card c-admin">
+                    <div class="stat-title">管理费</div>
+                    <div class="stat-value" style="color: var(--admin-color);" id="stat-admin-exp">¥ 0.00</div>
+                    <div class="stat-sub">含已付+应付</div>
+                </div>
+                <div class="card stat-card c-alert">
+                    <div class="stat-title">应付未付</div>
+                    <div class="stat-value" style="color: #f59e0b;" id="stat-payable-total">¥ 0.00</div>
+                    <div class="stat-sub" id="stat-payable-sub"></div>
                 </div>
                 <div class="card stat-card c-profit">
-                    <div class="stat-title">本月账面净利润 (含应付)</div>
+                    <div class="stat-title">净利润</div>
                     <div class="stat-value" id="stat-net-profit">¥ 0.00</div>
                     <div class="stat-sub">净利率: <span id="stat-net-margin">0.00%</span></div>
                 </div>
@@ -1001,6 +1004,11 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- 【新增】月度收支趋势图 -->
+            <div class="card" style="margin-top: 20px;">
+                <h2 class="section-title">📈 月度收支趋势</h2>
+                <div id="chart-monthly-revenue" style="position: relative; height: 300px; padding: 10px 0;"></div>
             </div>
        <div class="card" style="margin-top: 20px; margin-bottom: 20px;">
                 <h2 class="section-title">📈 年度各月立项数量与合同金额趋势</h2>
@@ -1767,49 +1775,57 @@
         }
 
         function renderOverview() {
-            let monthReceived = 0, monthReceivable = 0, monthPaidProject = 0, monthPaidAdmin = 0, monthPayable = 0;
-            let monthTotalProject = 0, monthTotalAdmin = 0; // 用于计算账面总成本
+            let received = 0, receivable = 0, paidExpense = 0, payableExpense = 0, totalAdmin = 0;
             
             dataStore.income.filter(item => isSelectedMonth(item.date)).forEach(item => { 
                 const val = toCNY(item); 
-                item.status === '已到账' ? monthReceived += val : monthReceivable += val; 
+                item.status === '已到账' ? received += val : receivable += val; 
             });
             
             dataStore.expense.filter(item => isSelectedMonth(item.date)).forEach(item => { 
                 const val = toCNY(item); 
-                const expStatus = item.status || '已支付'; // 兼容老数据
+                const expStatus = item.status || '已支付';
                 
-                // 1. 拆分已支付和应付
                 if (expStatus !== '应付') {
-                    item.projectId === 'ADMIN' ? monthPaidAdmin += val : monthPaidProject += val; 
+                    paidExpense += val;
                 } else {
-                    monthPayable += val; 
+                    payableExpense += val;
                 }
                 
-                // 2. 累加总体账面成本
-                item.projectId === 'ADMIN' ? monthTotalAdmin += val : monthTotalProject += val; 
+                if (item.projectId === 'ADMIN') totalAdmin += val;
             });
 
-            const totalIncome = monthReceived + monthReceivable;
-            const bookNetProfit = totalIncome - monthTotalProject - monthTotalAdmin; // 包含应付的账面净利
-            const bookNetMargin = totalIncome > 0 ? (bookNetProfit / totalIncome) * 100 : 0;
-            const cashFlow = monthReceived - monthPaidProject - monthPaidAdmin; // 新增：真实现金流
-
-            document.getElementById('stat-income-received').innerText = `¥ ${formatMoney(monthReceived)}`;
-            document.getElementById('stat-income-total').innerText = `包含应收总计: ¥ ${formatMoney(totalIncome)}`;
-            document.getElementById('stat-proj-cost').innerText = `¥ ${formatMoney(monthPaidProject)}`;
-            document.getElementById('stat-admin-exp').innerText = `¥ ${formatMoney(monthPaidAdmin)}`;
-            document.getElementById('stat-payable-total').innerText = `¥ ${formatMoney(monthPayable)}`;
+            const totalIncome = received + receivable;
+            const totalExpense = paidExpense + payableExpense;
+            const netProfit = totalIncome - totalExpense;
+            const netMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
             
-            const cashFlowEl = document.getElementById('stat-cash-flow');
-            cashFlowEl.innerText = `¥ ${formatMoney(cashFlow)}`;
-            cashFlowEl.style.color = cashFlow < 0 ? 'var(--expense-color)' : 'var(--income-color)';
+            const receivableCount = dataStore.income.filter(item => isSelectedMonth(item.date) && item.status !== '已到账').length;
+            const payableCount = dataStore.expense.filter(item => isSelectedMonth(item.date) && (item.status || '已支付') === '应付').length;
+
+            document.getElementById('stat-total-income').innerText = `¥ ${formatMoney(totalIncome)}`;
+            document.getElementById('stat-income-sub').innerText = `已到账: ¥ ${formatMoney(received)}`;
+            
+            document.getElementById('stat-total-expense').innerText = `¥ ${formatMoney(totalExpense)}`;
+            document.getElementById('stat-expense-sub').innerText = `已支付: ¥ ${formatMoney(paidExpense)}`;
+            
+            const receivableEl = document.getElementById('stat-receivable');
+            receivableEl.innerText = `¥ ${formatMoney(receivable)}`;
+            receivableEl.style.color = receivable > 0 ? '#f59e0b' : 'var(--income-color)';
+            document.getElementById('stat-receivable-sub').innerText = receivableCount > 0 ? `${receivableCount} 笔待收` : '无应收';
+            
+            document.getElementById('stat-admin-exp').innerText = `¥ ${formatMoney(totalAdmin)}`;
+            
+            const payableEl = document.getElementById('stat-payable-total');
+            payableEl.innerText = `¥ ${formatMoney(payableExpense)}`;
+            payableEl.style.color = payableExpense > 0 ? '#f59e0b' : 'var(--income-color)';
+            document.getElementById('stat-payable-sub').innerText = payableCount > 0 ? `${payableCount} 笔待付` : '无应付';
             
             const netProfitEl = document.getElementById('stat-net-profit'); 
-            netProfitEl.innerText = `¥ ${formatMoney(bookNetProfit)}`;
-            netProfitEl.style.color = bookNetProfit < 0 ? 'var(--expense-color)' : 'var(--text-main)';
+            netProfitEl.innerText = `¥ ${formatMoney(netProfit)}`;
+            netProfitEl.style.color = netProfit < 0 ? 'var(--expense-color)' : 'var(--profit-color)';
             
-            document.getElementById('stat-net-margin').innerText = `${bookNetMargin.toFixed(2)}%`;
+            document.getElementById('stat-net-margin').innerText = `${netMargin.toFixed(2)}%`;
         }
 
         function getAmountHtml(item, isIncome) {
@@ -2157,6 +2173,82 @@
                         suppTbody.innerHTML += `<tr class="sub-row ${trId}"><td></td><td style="color: var(--text-muted); padding-left: 10px;">↳ ${pName}</td><td style="color: var(--text-muted);">¥ ${formatMoney(pData.paid + pData.payable)}</td><td style="color: var(--income-color); font-size: 0.75rem;">已付: ¥ ${formatMoney(pData.paid)}</td><td style="color: #f59e0b; font-size: 0.75rem;">未付: ¥ ${formatMoney(pData.payable)}</td><td></td></tr>`;
                     }
                 });
+            }
+
+            // ================= 【新增】月度收支趋势折线图 =================
+            const chartRevenueEl = document.getElementById('chart-monthly-revenue');
+            if (chartRevenueEl) {
+                const monthlyIncome = new Array(12).fill(0);
+                const monthlyExpense = new Array(12).fill(0);
+                const monthlyProfit = new Array(12).fill(0);
+                
+                yearIncome.forEach(item => {
+                    if (item.date && item.date.length >= 7) {
+                        const m = parseInt(item.date.split('-')[1], 10) - 1;
+                        if (m >= 0 && m <= 11) monthlyIncome[m] += toCNY(item);
+                    }
+                });
+                yearExpense.forEach(item => {
+                    if (item.date && item.date.length >= 7) {
+                        const m = parseInt(item.date.split('-')[1], 10) - 1;
+                        if (m >= 0 && m <= 11) monthlyExpense[m] += toCNY(item);
+                    }
+                });
+                for (let i = 0; i < 12; i++) monthlyProfit[i] = monthlyIncome[i] - monthlyExpense[i];
+                
+                const allVals = [...monthlyIncome, ...monthlyExpense, ...monthlyProfit];
+                const maxVal = Math.max(...allVals, 1);
+                const minVal = Math.min(...allVals, 0);
+                const range = maxVal - minVal || 1;
+                const chartH = 260;
+                const chartW = chartRevenueEl.clientWidth || 700;
+                const padL = 65, padR = 20, padT = 20, padB = 30;
+                const drawW = chartW - padL - padR;
+                const drawH = chartH - padT - padB;
+                
+                function yPos(val) { return padT + drawH - ((val - minVal) / range) * drawH; }
+                function xPos(idx) { return padL + (idx / 11) * drawW; }
+                
+                let gridHtml = '';
+                const gridSteps = 5;
+                for (let i = 0; i <= gridSteps; i++) {
+                    const val = minVal + (range / gridSteps) * i;
+                    const y = yPos(val);
+                    gridHtml += `<line x1="${padL}" y1="${y}" x2="${chartW - padR}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+                    gridHtml += `<text x="${padL - 6}" y="${y + 4}" text-anchor="end" fill="#94a3b8" font-size="10">${(val/10000).toFixed(1)}万</text>`;
+                }
+                
+                let labelsHtml = '';
+                for (let i = 0; i < 12; i++) {
+                    labelsHtml += `<text x="${xPos(i)}" y="${chartH - 5}" text-anchor="middle" fill="#94a3b8" font-size="11">${i+1}月</text>`;
+                }
+                
+                function makeLine(data, color) {
+                    const points = data.map((v, i) => `${xPos(i)},${yPos(v)}`).join(' ');
+                    let html = `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+                    data.forEach((v, i) => {
+                        if (v !== 0) html += `<circle cx="${xPos(i)}" cy="${yPos(v)}" r="4" fill="${color}" stroke="white" stroke-width="2"><title>${i+1}月: ¥${formatMoney(v)}</title></circle>`;
+                    });
+                    return html;
+                }
+                
+                let zeroLine = '';
+                if (minVal < 0) {
+                    zeroLine = `<line x1="${padL}" y1="${yPos(0)}" x2="${chartW - padR}" y2="${yPos(0)}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4"/>`;
+                }
+                
+                chartRevenueEl.innerHTML = `
+                    <svg width="100%" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="xMidYMid meet">
+                        ${gridHtml}${zeroLine}${labelsHtml}
+                        ${makeLine(monthlyIncome, '#059669')}
+                        ${makeLine(monthlyExpense, '#e11d48')}
+                        ${makeLine(monthlyProfit, '#2563eb')}
+                    </svg>
+                    <div style="display:flex; justify-content:center; gap:24px; margin-top:10px; font-size:0.8rem;">
+                        <span><span style="display:inline-block;width:14px;height:3px;background:#059669;border-radius:2px;vertical-align:middle;margin-right:5px;"></span>收入</span>
+                        <span><span style="display:inline-block;width:14px;height:3px;background:#e11d48;border-radius:2px;vertical-align:middle;margin-right:5px;"></span>支出</span>
+                        <span><span style="display:inline-block;width:14px;height:3px;background:#2563eb;border-radius:2px;vertical-align:middle;margin-right:5px;"></span>净利润</span>
+                    </div>`;
             }
 
             // ================= 【正确位置的新增代码】渲染月度项目趋势双轴图 =================
